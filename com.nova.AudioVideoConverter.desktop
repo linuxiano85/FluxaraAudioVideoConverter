@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Nova Audio/Video Converter
+Comment=A modern, high-performance audio and video converter
+Exec=nova-converter
+Icon=com.nova.AudioVideoConverter
+Terminal=true
+Type=Application
+Categories=AudioVideo;Audio;Video;Utility;
+Keywords=converter;audio;video;media;transcode;
