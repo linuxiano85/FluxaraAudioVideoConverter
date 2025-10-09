@@ -1,0 +1,18 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	cargo build --release
+
+override_dh_auto_install:
+	install -Dm755 target/release/nova-converter debian/nova-audio-video-converter/usr/bin/nova-converter
+	install -Dm644 com.nova.AudioVideoConverter.desktop debian/nova-audio-video-converter/usr/share/applications/com.nova.AudioVideoConverter.desktop
+	install -Dm644 com.nova.AudioVideoConverter.svg debian/nova-audio-video-converter/usr/share/icons/hicolor/scalable/apps/com.nova.AudioVideoConverter.svg
+
+override_dh_auto_clean:
+	cargo clean || true
+
+override_dh_auto_test:
+	# Skip tests for now

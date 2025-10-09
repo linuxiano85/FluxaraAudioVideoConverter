@@ -1,0 +1,68 @@
+app-id: com.nova.AudioVideoConverter
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: nova-converter
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  - --filesystem=home
+  - --share=network
+modules:
+  - name: ffmpeg
+    buildsystem: autotools
+    config-opts:
+      - --enable-gpl
+      - --enable-shared
+      - --disable-static
+      - --enable-libx264
+      - --enable-libx265
+      - --enable-libvpx
+      - --enable-libmp3lame
+      - --enable-libvorbis
+      - --enable-libopus
+    sources:
+      - type: archive
+        url: https://ffmpeg.org/releases/ffmpeg-6.1.1.tar.xz
+        sha256: 8684f4b00f94b85461884c3719382f1261f0d9eb3d59640a1f4ac0873616f968
+    cleanup:
+      - /share/ffmpeg/examples
+
+  - name: x264
+    config-opts:
+      - --enable-shared
+      - --enable-static
+      - --enable-pic
+    sources:
+      - type: git
+        url: https://code.videolan.org/videolan/x264.git
+        commit: 4613ac3c15fd75cebc4b9f65b7fb95e70a3acce1
+    cleanup:
+      - /bin/x264
+
+  - name: x265
+    buildsystem: cmake
+    subdir: source
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+    sources:
+      - type: archive
+        url: https://bitbucket.org/multicoreware/x265_git/downloads/x265_3.5.tar.gz
+        sha256: e70a3335cacacbba0b3a20ec6fecd6783932288ebc8163ad74bcc9606477cae8
+
+  - name: nova-audio-video-converter
+    buildsystem: simple
+    build-commands:
+      - cargo --offline fetch --manifest-path Cargo.toml --verbose
+      - cargo --offline build --release --verbose
+      - install -Dm755 ./target/release/nova-converter -t /app/bin/
+      - install -Dm644 com.nova.AudioVideoConverter.desktop /app/share/applications/com.nova.AudioVideoConverter.desktop
+      - install -Dm644 com.nova.AudioVideoConverter.svg /app/share/icons/hicolor/scalable/apps/com.nova.AudioVideoConverter.svg
+    sources:
+      - type: dir
+        path: .
+      - cargo-sources.json
