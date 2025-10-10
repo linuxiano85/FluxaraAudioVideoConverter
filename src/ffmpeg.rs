@@ -20,9 +20,7 @@ pub fn check_ffprobe() -> Result<()> {
 /// Execute FFmpeg command synchronously
 pub fn execute_ffmpeg(args: &[&str]) -> Result<()> {
     let mut cmd = Command::new("ffmpeg");
-    cmd.args(args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+    cmd.args(args).stdout(Stdio::piped()).stderr(Stdio::piped());
 
     let output = cmd.output().context("Failed to execute ffmpeg")?;
 
@@ -80,19 +78,22 @@ pub fn build_filtergraph(filters: &[&str]) -> String {
 }
 
 /// Build a complex filtergraph with multiple inputs/outputs
-pub fn build_complex_filtergraph(video_filters: &[&str], audio_filters: &[&str]) -> (String, String) {
+pub fn build_complex_filtergraph(
+    video_filters: &[&str],
+    audio_filters: &[&str],
+) -> (String, String) {
     let vf = if video_filters.is_empty() {
         String::new()
     } else {
         video_filters.join(",")
     };
-    
+
     let af = if audio_filters.is_empty() {
         String::new()
     } else {
         audio_filters.join(",")
     };
-    
+
     (vf, af)
 }
 

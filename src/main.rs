@@ -7,11 +7,11 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use walkdir::WalkDir;
 
-mod ffmpeg;
-mod audio;
-mod video;
-mod capture;
 mod ai;
+mod audio;
+mod capture;
+mod ffmpeg;
+mod video;
 
 #[derive(Parser)]
 #[command(name = "Nova Audio/Video Converter")]
@@ -29,27 +29,27 @@ enum Commands {
         /// Input file or directory
         #[arg(short, long)]
         input: PathBuf,
-        
+
         /// Output format (mp3, mp4, avi, mkv, flac, wav, ogg, webm, etc.)
         #[arg(short, long)]
         format: String,
-        
+
         /// Output directory (default: current directory)
         #[arg(short = 'o', long)]
         output: Option<PathBuf>,
-        
+
         /// Process directories recursively
         #[arg(short, long)]
         recursive: bool,
-        
+
         /// Audio quality (64k, 128k, 192k, 256k, 320k)
         #[arg(short = 'q', long, default_value = "192k")]
         quality: String,
-        
+
         /// Video codec (libx264, libx265, libvpx, etc.)
         #[arg(short = 'c', long)]
         codec: Option<String>,
-        
+
         /// Number of parallel jobs
         #[arg(short = 'j', long, default_value = "4")]
         jobs: usize,
@@ -59,35 +59,35 @@ enum Commands {
         /// Input file
         #[arg(short, long)]
         input: PathBuf,
-        
+
         /// Output file
         #[arg(short, long)]
         output: PathBuf,
-        
+
         /// Enable denoising (afftdn)
         #[arg(long, default_value = "true")]
         denoise: bool,
-        
+
         /// Enable loudness normalization
         #[arg(long, default_value = "true")]
         normalize: bool,
-        
+
         /// High-pass filter frequency (Hz)
         #[arg(long, default_value = "80")]
         highpass: u32,
-        
+
         /// Low-pass filter frequency (Hz, optional)
         #[arg(long)]
         lowpass: Option<u32>,
-        
+
         /// Notch filter for hum removal (50 or 60 Hz)
         #[arg(long)]
         notch: Option<u32>,
-        
+
         /// Enable compressor
         #[arg(long, default_value = "true")]
         compressor: bool,
-        
+
         /// Enable noise gate
         #[arg(long, default_value = "true")]
         gate: bool,
@@ -97,39 +97,39 @@ enum Commands {
         /// Input file
         #[arg(short, long)]
         input: PathBuf,
-        
+
         /// Output file
         #[arg(short, long)]
         output: PathBuf,
-        
+
         /// Enable deinterlacing (bwdif)
         #[arg(long, default_value = "true")]
         deinterlace: bool,
-        
+
         /// Enable stabilization (deshake)
         #[arg(long)]
         stabilize: bool,
-        
+
         /// Denoise type: none, hqdn3d, nlmeans
         #[arg(long, default_value = "hqdn3d")]
         denoise: String,
-        
+
         /// Enable sharpening
         #[arg(long, default_value = "true")]
         sharpen: bool,
-        
+
         /// Enable color adjustment
         #[arg(long, default_value = "true")]
         color: bool,
-        
+
         /// Scale width
         #[arg(long)]
         width: Option<u32>,
-        
+
         /// Scale height
         #[arg(long)]
         height: Option<u32>,
-        
+
         /// Display aspect ratio (e.g., 4:3, 16:9)
         #[arg(long)]
         aspect: Option<String>,
@@ -139,11 +139,11 @@ enum Commands {
         /// Input file
         #[arg(short, long)]
         input: PathBuf,
-        
+
         /// Output file
         #[arg(short, long)]
         output: PathBuf,
-        
+
         /// Notch filter for hum removal (50 or 60 Hz)
         #[arg(long)]
         notch: Option<u32>,
@@ -155,55 +155,55 @@ enum Commands {
         /// Output file
         #[arg(short, long)]
         output: PathBuf,
-        
+
         /// Video device (e.g., /dev/video0)
         #[arg(long, default_value = "/dev/video0")]
         video_device: String,
-        
+
         /// Audio device (e.g., hw:1,0)
         #[arg(long, default_value = "hw:1,0")]
         audio_device: String,
-        
+
         /// Output format: mp4 or mkv
         #[arg(long, default_value = "mp4")]
         format: String,
-        
+
         /// Enable deinterlacing
         #[arg(long, default_value = "true")]
         deinterlace: bool,
-        
+
         /// Enable stabilization
         #[arg(long)]
         stabilize: bool,
-        
+
         /// Denoise type: none, hqdn3d, nlmeans
         #[arg(long)]
         denoise: Option<String>,
-        
+
         /// Video bitrate (e.g., 5M)
         #[arg(long)]
         vbitrate: Option<String>,
-        
+
         /// CRF value (18-28, lower = better quality)
         #[arg(long)]
         crf: Option<u32>,
-        
+
         /// Video width
         #[arg(long)]
         width: Option<u32>,
-        
+
         /// Video height
         #[arg(long)]
         height: Option<u32>,
-        
+
         /// Frame rate
         #[arg(long)]
         fps: Option<u32>,
-        
+
         /// Audio bitrate (e.g., 192k)
         #[arg(long, default_value = "192k")]
         abitrate: String,
-        
+
         /// Archival mode (lossless/near-lossless)
         #[arg(long)]
         archival: bool,
@@ -213,15 +213,15 @@ enum Commands {
         /// Input file or directory
         #[arg(short, long)]
         input: PathBuf,
-        
+
         /// Remove metadata
         #[arg(short, long)]
         metadata: bool,
-        
+
         /// Optimize file size
         #[arg(short = 'o', long)]
         optimize: bool,
-        
+
         /// Process recursively
         #[arg(short, long)]
         recursive: bool,
@@ -238,9 +238,9 @@ enum Commands {
 
 fn main() -> Result<()> {
     print_banner();
-    
+
     let cli = Cli::parse();
-    
+
     match &cli.command {
         Commands::Convert {
             input,
@@ -251,7 +251,15 @@ fn main() -> Result<()> {
             codec,
             jobs,
         } => {
-            convert_files(input, format, output.as_ref(), *recursive, quality, codec.as_ref(), *jobs)?;
+            convert_files(
+                input,
+                format,
+                output.as_ref(),
+                *recursive,
+                quality,
+                codec.as_ref(),
+                *jobs,
+            )?;
         }
         Commands::EnhanceAudio {
             input,
@@ -309,7 +317,11 @@ fn main() -> Result<()> {
             video::enhance_video(input, output, &opts)?;
             println!("{} Video enhancement completed!", "✓".green());
         }
-        Commands::VhsRescue { input, output, notch } => {
+        Commands::VhsRescue {
+            input,
+            output,
+            notch,
+        } => {
             println!("{} Starting VHS Rescue...", "🎬".bright_cyan());
             video::vhs_rescue(input, output, *notch)?;
             println!("{} VHS Rescue completed!", "✓".green());
@@ -382,7 +394,12 @@ fn main() -> Result<()> {
                 audio_bitrate: abitrate.clone(),
                 archival_mode: *archival,
             };
-            println!("{} Starting capture from {} and {}...", "📹".bright_cyan(), video_device, audio_device);
+            println!(
+                "{} Starting capture from {} and {}...",
+                "📹".bright_cyan(),
+                video_device,
+                audio_device
+            );
             println!("{}", "Press Ctrl+C to stop recording".yellow());
             capture::capture(output, &opts)?;
             println!("{} Capture completed!", "✓".green());
@@ -402,15 +419,27 @@ fn main() -> Result<()> {
             list_formats();
         }
     }
-    
+
     Ok(())
 }
 
 fn print_banner() {
-    println!("{}", "╔══════════════════════════════════════════╗".bright_cyan());
-    println!("{}", "║   Nova Audio/Video Converter v0.1.0     ║".bright_cyan());
-    println!("{}", "║   High-Performance Media Converter       ║".bright_cyan());
-    println!("{}", "╚══════════════════════════════════════════╝".bright_cyan());
+    println!(
+        "{}",
+        "╔══════════════════════════════════════════╗".bright_cyan()
+    );
+    println!(
+        "{}",
+        "║   Nova Audio/Video Converter v0.1.0     ║".bright_cyan()
+    );
+    println!(
+        "{}",
+        "║   High-Performance Media Converter       ║".bright_cyan()
+    );
+    println!(
+        "{}",
+        "╚══════════════════════════════════════════╝".bright_cyan()
+    );
     println!();
 }
 
@@ -424,25 +453,27 @@ fn convert_files(
     jobs: usize,
 ) -> Result<()> {
     check_ffmpeg()?;
-    
-    let output_dir = output_dir.map(|p| p.as_path()).unwrap_or_else(|| Path::new("."));
+
+    let output_dir = output_dir
+        .map(|p| p.as_path())
+        .unwrap_or_else(|| Path::new("."));
     std::fs::create_dir_all(output_dir)?;
-    
+
     let files = collect_files(input, recursive)?;
-    
+
     if files.is_empty() {
         println!("{}", "No media files found!".yellow());
         return Ok(());
     }
-    
+
     println!("{} Found {} file(s) to convert", "✓".green(), files.len());
     println!();
-    
+
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(jobs)
         .build()
         .context("Failed to create thread pool")?;
-    
+
     pool.install(|| {
         files.par_iter().for_each(|file| {
             match convert_file(file, format, output_dir, quality, codec) {
@@ -455,10 +486,10 @@ fn convert_files(
             }
         });
     });
-    
+
     println!();
     println!("{} Conversion completed!", "✓".green());
-    
+
     Ok(())
 }
 
@@ -471,14 +502,14 @@ fn convert_file(
 ) -> Result<()> {
     let file_stem = input.file_stem().context("Invalid filename")?;
     let output_file = output_dir.join(format!("{}.{}", file_stem.to_string_lossy(), format));
-    
+
     let mut cmd = Command::new("ffmpeg");
     cmd.arg("-i")
         .arg(input)
         .arg("-y")
         .arg("-loglevel")
         .arg("error");
-    
+
     if is_audio_format(format) {
         cmd.arg("-b:a").arg(quality);
     } else {
@@ -487,59 +518,58 @@ fn convert_file(
         }
         cmd.arg("-b:a").arg(quality);
     }
-    
+
     cmd.arg(&output_file)
         .stdout(Stdio::null())
         .stderr(Stdio::piped());
-    
+
     let output = cmd.output().context("Failed to execute ffmpeg")?;
-    
+
     if !output.status.success() {
         let error = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!("FFmpeg error: {}", error);
     }
-    
+
     Ok(())
 }
 
 fn clean_files(input: &Path, remove_metadata: bool, optimize: bool, recursive: bool) -> Result<()> {
     check_ffmpeg()?;
-    
+
     let files = collect_files(input, recursive)?;
-    
+
     if files.is_empty() {
         println!("{}", "No media files found!".yellow());
         return Ok(());
     }
-    
+
     println!("{} Found {} file(s) to clean", "✓".green(), files.len());
-    
+
     for file in &files {
         let output_file = file.with_extension(format!(
             "cleaned.{}",
             file.extension().unwrap_or_default().to_string_lossy()
         ));
-        
+
         let mut cmd = Command::new("ffmpeg");
         cmd.arg("-i")
             .arg(file)
             .arg("-y")
             .arg("-loglevel")
             .arg("error");
-        
+
         if remove_metadata {
             cmd.arg("-map_metadata").arg("-1");
         }
-        
+
         if optimize {
-            cmd.arg("-c:v").arg("copy")
-                .arg("-c:a").arg("copy");
+            cmd.arg("-c:v").arg("copy").arg("-c:a").arg("copy");
         }
-        
+
         cmd.arg(&output_file)
             .stdout(Stdio::null())
             .stderr(Stdio::piped());
-        
+
         match cmd.output() {
             Ok(output) if output.status.success() => {
                 println!("{} Cleaned: {}", "✓".green(), file.display());
@@ -548,26 +578,31 @@ fn clean_files(input: &Path, remove_metadata: bool, optimize: bool, recursive: b
             }
             Ok(output) => {
                 let error = String::from_utf8_lossy(&output.stderr);
-                eprintln!("{} Failed to clean {}: {}", "✗".red(), file.display(), error);
+                eprintln!(
+                    "{} Failed to clean {}: {}",
+                    "✗".red(),
+                    file.display(),
+                    error
+                );
             }
             Err(e) => {
                 eprintln!("{} Failed to clean {}: {}", "✗".red(), file.display(), e);
             }
         }
     }
-    
+
     println!();
     println!("{} Cleaning completed!", "✓".green());
-    
+
     Ok(())
 }
 
 fn show_info(input: &Path) -> Result<()> {
     check_ffmpeg()?;
-    
+
     println!("{} File: {}", "ℹ".bright_blue(), input.display());
     println!();
-    
+
     let output = Command::new("ffprobe")
         .arg("-v")
         .arg("quiet")
@@ -578,13 +613,13 @@ fn show_info(input: &Path) -> Result<()> {
         .arg(input)
         .output()
         .context("Failed to execute ffprobe")?;
-    
+
     if !output.status.success() {
         anyhow::bail!("Failed to get file information");
     }
-    
+
     let info: serde_json::Value = serde_json::from_slice(&output.stdout)?;
-    
+
     if let Some(format) = info.get("format") {
         if let Some(duration) = format.get("duration").and_then(|d| d.as_str()) {
             let duration: f64 = duration.parse().unwrap_or(0.0);
@@ -599,15 +634,27 @@ fn show_info(input: &Path) -> Result<()> {
             println!("{} Bit rate: {} kbps", "•".bright_blue(), bit_rate / 1000);
         }
     }
-    
+
     if let Some(streams) = info.get("streams").and_then(|s| s.as_array()) {
         println!();
         println!("{} Streams:", "•".bright_blue());
         for (i, stream) in streams.iter().enumerate() {
-            let codec_type = stream.get("codec_type").and_then(|c| c.as_str()).unwrap_or("unknown");
-            let codec_name = stream.get("codec_name").and_then(|c| c.as_str()).unwrap_or("unknown");
-            println!("  {} Stream #{}: {} ({})", "→".bright_blue(), i, codec_type, codec_name);
-            
+            let codec_type = stream
+                .get("codec_type")
+                .and_then(|c| c.as_str())
+                .unwrap_or("unknown");
+            let codec_name = stream
+                .get("codec_name")
+                .and_then(|c| c.as_str())
+                .unwrap_or("unknown");
+            println!(
+                "  {} Stream #{}: {} ({})",
+                "→".bright_blue(),
+                i,
+                codec_type,
+                codec_name
+            );
+
             if codec_type == "video" {
                 if let (Some(width), Some(height)) = (
                     stream.get("width").and_then(|w| w.as_i64()),
@@ -618,7 +665,7 @@ fn show_info(input: &Path) -> Result<()> {
             }
         }
     }
-    
+
     Ok(())
 }
 
@@ -645,7 +692,7 @@ fn list_formats() {
 
 fn collect_files(input: &Path, recursive: bool) -> Result<Vec<PathBuf>> {
     let mut files = Vec::new();
-    
+
     if input.is_file() {
         files.push(input.to_path_buf());
     } else if input.is_dir() {
@@ -666,7 +713,7 @@ fn collect_files(input: &Path, recursive: bool) -> Result<Vec<PathBuf>> {
             }
         }
     }
-    
+
     Ok(files)
 }
 
@@ -675,8 +722,22 @@ fn is_media_file(path: &Path) -> bool {
         let ext = ext.to_string_lossy().to_lowercase();
         matches!(
             ext.as_str(),
-            "mp3" | "mp4" | "avi" | "mkv" | "flac" | "wav" | "ogg" | "webm" | 
-            "mov" | "flv" | "wmv" | "m4a" | "aac" | "wma" | "m4v" | "3gp"
+            "mp3"
+                | "mp4"
+                | "avi"
+                | "mkv"
+                | "flac"
+                | "wav"
+                | "ogg"
+                | "webm"
+                | "mov"
+                | "flv"
+                | "wmv"
+                | "m4a"
+                | "aac"
+                | "wma"
+                | "m4v"
+                | "3gp"
         )
     } else {
         false

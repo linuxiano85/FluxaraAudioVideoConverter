@@ -1,6 +1,6 @@
+use crate::ffmpeg;
 use anyhow::Result;
 use std::path::Path;
-use crate::ffmpeg;
 
 /// Video enhancement options
 #[derive(Debug, Clone)]
@@ -18,15 +18,15 @@ pub struct VideoEnhanceOptions {
 #[derive(Debug, Clone, PartialEq)]
 pub enum DenoiseType {
     None,
-    Hqdn3d,   // Fast, conservative
-    Nlmeans,  // High quality, slower
+    Hqdn3d,  // Fast, conservative
+    Nlmeans, // High quality, slower
 }
 
 impl Default for VideoEnhanceOptions {
     fn default() -> Self {
         Self {
             deinterlace: true,
-            stabilize: false,      // Can be slow, off by default
+            stabilize: false, // Can be slow, off by default
             denoise: DenoiseType::Hqdn3d,
             sharpen: true,
             color_adjust: true,
@@ -120,11 +120,7 @@ pub fn enhance_video(input: &Path, output: &Path, opts: &VideoEnhanceOptions) ->
 }
 
 /// VHS rescue preset - combines video and audio enhancement
-pub fn vhs_rescue(
-    input: &Path,
-    output: &Path,
-    notch_freq: Option<u32>,
-) -> Result<()> {
+pub fn vhs_rescue(input: &Path, output: &Path, notch_freq: Option<u32>) -> Result<()> {
     ffmpeg::check_ffmpeg()?;
 
     // Video filters for VHS
@@ -164,7 +160,7 @@ pub fn vhs_rescue(
         "-c:v",
         "libx264",
         "-preset",
-        "slow",      // Better quality for archival
+        "slow", // Better quality for archival
         "-crf",
         "18",
         "-c:a",

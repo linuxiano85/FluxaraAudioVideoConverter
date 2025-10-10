@@ -24,11 +24,23 @@ impl Default for AiEnhanceOptions {
 }
 
 /// AI-based video enhancement (stub)
-pub fn ai_enhance_video(_input: &std::path::Path, _output: &std::path::Path, _opts: &AiEnhanceOptions) -> Result<()> {
-    anyhow::bail!("AI enhancement not yet implemented. This is a placeholder for future functionality.");
+pub fn ai_enhance_video(
+    _input: &std::path::Path,
+    _output: &std::path::Path,
+    _opts: &AiEnhanceOptions,
+) -> Result<()> {
+    anyhow::bail!(
+        "AI enhancement not yet implemented. This is a placeholder for future functionality."
+    );
 }
 
 /// AI-based audio enhancement (stub)
-pub fn ai_enhance_audio(_input: &std::path::Path, _output: &std::path::Path, _opts: &AiEnhanceOptions) -> Result<()> {
-    anyhow::bail!("AI enhancement not yet implemented. This is a placeholder for future functionality.");
+pub fn ai_enhance_audio(
+    _input: &std::path::Path,
+    _output: &std::path::Path,
+    _opts: &AiEnhanceOptions,
+) -> Result<()> {
+    anyhow::bail!(
+        "AI enhancement not yet implemented. This is a placeholder for future functionality."
+    );
 }

@@ -1,13 +1,11 @@
-use std::process::Command;
 use std::path::Path;
+use std::process::Command;
 
 /// Test that FFmpeg is available
 #[test]
 fn test_ffmpeg_available() {
-    let output = Command::new("ffmpeg")
-        .arg("-version")
-        .output();
-    
+    let output = Command::new("ffmpeg").arg("-version").output();
+
     assert!(output.is_ok(), "FFmpeg should be installed");
     if let Ok(output) = output {
         assert!(output.status.success(), "FFmpeg should run successfully");
@@ -17,10 +15,8 @@ fn test_ffmpeg_available() {
 /// Test that FFprobe is available
 #[test]
 fn test_ffprobe_available() {
-    let output = Command::new("ffprobe")
-        .arg("-version")
-        .output();
-    
+    let output = Command::new("ffprobe").arg("-version").output();
+
     assert!(output.is_ok(), "FFprobe should be installed");
     if let Ok(output) = output {
         assert!(output.status.success(), "FFprobe should run successfully");
@@ -32,7 +28,7 @@ fn test_ffprobe_available() {
 fn test_generate_synthetic_audio() {
     let temp_dir = std::env::temp_dir();
     let test_file = temp_dir.join("test_audio.wav");
-    
+
     // Generate 1 second of 440Hz sine wave
     let output = Command::new("ffmpeg")
         .arg("-f")
@@ -42,12 +38,15 @@ fn test_generate_synthetic_audio() {
         .arg("-y")
         .arg(&test_file)
         .output();
-    
+
     assert!(output.is_ok(), "Should generate synthetic audio");
     if let Ok(output) = output {
-        assert!(output.status.success(), "FFmpeg should complete successfully");
+        assert!(
+            output.status.success(),
+            "FFmpeg should complete successfully"
+        );
         assert!(test_file.exists(), "Output file should exist");
-        
+
         // Clean up
         let _ = std::fs::remove_file(&test_file);
     }
@@ -58,7 +57,7 @@ fn test_generate_synthetic_audio() {
 fn test_generate_synthetic_video() {
     let temp_dir = std::env::temp_dir();
     let test_file = temp_dir.join("test_video.mp4");
-    
+
     // Generate 1 second of test pattern
     let output = Command::new("ffmpeg")
         .arg("-f")
@@ -74,12 +73,15 @@ fn test_generate_synthetic_video() {
         .arg("-y")
         .arg(&test_file)
         .output();
-    
+
     assert!(output.is_ok(), "Should generate synthetic video");
     if let Ok(output) = output {
-        assert!(output.status.success(), "FFmpeg should complete successfully");
+        assert!(
+            output.status.success(),
+            "FFmpeg should complete successfully"
+        );
         assert!(test_file.exists(), "Output file should exist");
-        
+
         // Clean up
         let _ = std::fs::remove_file(&test_file);
     }
@@ -91,7 +93,7 @@ fn test_audio_conversion() {
     let temp_dir = std::env::temp_dir();
     let input_file = temp_dir.join("test_input.wav");
     let output_file = temp_dir.join("test_output.mp3");
-    
+
     // First generate a test file
     let gen = Command::new("ffmpeg")
         .arg("-f")
@@ -101,7 +103,7 @@ fn test_audio_conversion() {
         .arg("-y")
         .arg(&input_file)
         .output();
-    
+
     if gen.is_ok() && input_file.exists() {
         // Try to convert it
         let output = Command::new("ffmpeg")
@@ -114,13 +116,13 @@ fn test_audio_conversion() {
             .arg("-y")
             .arg(&output_file)
             .output();
-        
+
         assert!(output.is_ok(), "Should convert audio");
         if let Ok(output) = output {
             assert!(output.status.success(), "Conversion should succeed");
             assert!(output_file.exists(), "Output file should exist");
         }
-        
+
         // Clean up
         let _ = std::fs::remove_file(&input_file);
         let _ = std::fs::remove_file(&output_file);
@@ -133,7 +135,7 @@ fn test_video_deinterlace_filter() {
     let temp_dir = std::env::temp_dir();
     let input_file = temp_dir.join("test_interlaced.mp4");
     let output_file = temp_dir.join("test_deinterlaced.mp4");
-    
+
     // Generate interlaced test video
     let gen = Command::new("ffmpeg")
         .arg("-f")
@@ -145,7 +147,7 @@ fn test_video_deinterlace_filter() {
         .arg("-y")
         .arg(&input_file)
         .output();
-    
+
     if gen.is_ok() && input_file.exists() {
         // Apply bwdif filter
         let output = Command::new("ffmpeg")
@@ -160,13 +162,13 @@ fn test_video_deinterlace_filter() {
             .arg("-y")
             .arg(&output_file)
             .output();
-        
+
         assert!(output.is_ok(), "Should deinterlace video");
         if let Ok(output) = output {
             assert!(output.status.success(), "Deinterlacing should succeed");
             assert!(output_file.exists(), "Output file should exist");
         }
-        
+
         // Clean up
         let _ = std::fs::remove_file(&input_file);
         let _ = std::fs::remove_file(&output_file);
@@ -179,7 +181,7 @@ fn test_audio_denoise_filter() {
     let temp_dir = std::env::temp_dir();
     let input_file = temp_dir.join("test_noisy_audio.wav");
     let output_file = temp_dir.join("test_clean_audio.wav");
-    
+
     // Generate test audio
     let gen = Command::new("ffmpeg")
         .arg("-f")
@@ -189,7 +191,7 @@ fn test_audio_denoise_filter() {
         .arg("-y")
         .arg(&input_file)
         .output();
-    
+
     if gen.is_ok() && input_file.exists() {
         // Apply afftdn filter
         let output = Command::new("ffmpeg")
@@ -200,13 +202,13 @@ fn test_audio_denoise_filter() {
             .arg("-y")
             .arg(&output_file)
             .output();
-        
+
         assert!(output.is_ok(), "Should denoise audio");
         if let Ok(output) = output {
             assert!(output.status.success(), "Denoising should succeed");
             assert!(output_file.exists(), "Output file should exist");
         }
-        
+
         // Clean up
         let _ = std::fs::remove_file(&input_file);
         let _ = std::fs::remove_file(&output_file);
@@ -219,7 +221,7 @@ fn test_loudness_normalization() {
     let temp_dir = std::env::temp_dir();
     let input_file = temp_dir.join("test_loud_audio.wav");
     let output_file = temp_dir.join("test_normalized_audio.wav");
-    
+
     // Generate test audio
     let gen = Command::new("ffmpeg")
         .arg("-f")
@@ -229,7 +231,7 @@ fn test_loudness_normalization() {
         .arg("-y")
         .arg(&input_file)
         .output();
-    
+
     if gen.is_ok() && input_file.exists() {
         // Apply loudnorm filter
         let output = Command::new("ffmpeg")
@@ -240,13 +242,13 @@ fn test_loudness_normalization() {
             .arg("-y")
             .arg(&output_file)
             .output();
-        
+
         assert!(output.is_ok(), "Should normalize audio");
         if let Ok(output) = output {
             assert!(output.status.success(), "Normalization should succeed");
             assert!(output_file.exists(), "Output file should exist");
         }
-        
+
         // Clean up
         let _ = std::fs::remove_file(&input_file);
         let _ = std::fs::remove_file(&output_file);

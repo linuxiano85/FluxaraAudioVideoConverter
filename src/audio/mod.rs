@@ -1,6 +1,6 @@
+use crate::ffmpeg;
 use anyhow::Result;
 use std::path::Path;
-use crate::ffmpeg;
 
 /// Audio enhancement options
 #[derive(Debug, Clone)]
@@ -20,9 +20,9 @@ impl Default for AudioEnhanceOptions {
         Self {
             denoise: true,
             normalize: true,
-            highpass_freq: Some(80),    // Remove low rumble
+            highpass_freq: Some(80), // Remove low rumble
             lowpass_freq: None,
-            notch_freq: None,           // User must specify 50 or 60
+            notch_freq: None, // User must specify 50 or 60
             compressor: true,
             gate: true,
             gate_threshold: -50.0,
@@ -64,7 +64,9 @@ pub fn build_audio_filters(opts: &AudioEnhanceOptions) -> Vec<String> {
 
     // Compressor for consistent levels (conservative settings)
     if opts.compressor {
-        filters.push("acompressor=threshold=-18dB:ratio=3:attack=20:release=250:makeup=2dB".to_string());
+        filters.push(
+            "acompressor=threshold=-18dB:ratio=3:attack=20:release=250:makeup=2dB".to_string(),
+        );
     }
 
     // Loudness normalization (EBU R128)

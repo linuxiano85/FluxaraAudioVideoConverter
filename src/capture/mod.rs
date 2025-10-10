@@ -1,31 +1,31 @@
+use crate::ffmpeg;
 use anyhow::{Context, Result};
 use std::path::Path;
 use std::process::{Command, Stdio};
-use crate::ffmpeg;
 
 /// Capture format options
 #[derive(Debug, Clone)]
 pub enum CaptureFormat {
-    Mp4,        // H.264 + AAC
-    Mkv,        // Matroska container
+    Mp4, // H.264 + AAC
+    Mkv, // Matroska container
 }
 
 /// Capture options
 #[derive(Debug, Clone)]
 pub struct CaptureOptions {
     pub format: CaptureFormat,
-    pub video_device: String,        // e.g., "/dev/video0"
-    pub audio_device: String,        // e.g., "hw:1,0"
+    pub video_device: String, // e.g., "/dev/video0"
+    pub audio_device: String, // e.g., "hw:1,0"
     pub deinterlace: bool,
     pub stabilize: bool,
-    pub denoise: Option<String>,     // "hqdn3d" or "nlmeans"
+    pub denoise: Option<String>,       // "hqdn3d" or "nlmeans"
     pub video_bitrate: Option<String>, // e.g., "5M"
-    pub crf: Option<u32>,            // CRF value (18-28)
+    pub crf: Option<u32>,              // CRF value (18-28)
     pub width: Option<u32>,
     pub height: Option<u32>,
     pub fps: Option<u32>,
-    pub audio_bitrate: String,       // e.g., "192k"
-    pub archival_mode: bool,         // Lossless/near-lossless
+    pub audio_bitrate: String, // e.g., "192k"
+    pub archival_mode: bool,   // Lossless/near-lossless
 }
 
 impl Default for CaptureOptions {
@@ -85,7 +85,10 @@ pub fn list_video_devices() -> Result<Vec<String>> {
             let error_str = String::from_utf8_lossy(&output.stderr);
             for line in error_str.lines() {
                 if line.contains("/dev/video") {
-                    if let Some(dev) = line.split_whitespace().find(|s| s.starts_with("/dev/video")) {
+                    if let Some(dev) = line
+                        .split_whitespace()
+                        .find(|s| s.starts_with("/dev/video"))
+                    {
                         devices.push(dev.to_string());
                     }
                 }
