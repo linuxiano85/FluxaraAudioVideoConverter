@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# Build AppImage for Nova Audio/Video Converter
+# Build AppImage for Fluxara AVC
 
-echo "Building Nova Audio/Video Converter AppImage..."
+echo "Building Fluxara AVC AppImage..."
 
 # Build the application
 cargo build --release
@@ -14,11 +14,11 @@ mkdir -p AppDir/usr/share/applications
 mkdir -p AppDir/usr/share/icons/hicolor/scalable/apps
 
 # Copy files
-cp target/release/nova-converter AppDir/usr/bin/
-cp com.nova.AudioVideoConverter.desktop AppDir/
-cp com.nova.AudioVideoConverter.desktop AppDir/usr/share/applications/
-cp com.nova.AudioVideoConverter.svg AppDir/usr/share/icons/hicolor/scalable/apps/
-cp com.nova.AudioVideoConverter.svg AppDir/
+cp target/release/fluxara-avc AppDir/usr/bin/
+cp com.fluxara.AVC.desktop AppDir/
+cp com.fluxara.AVC.desktop AppDir/usr/share/applications/
+cp com.fluxara.AVC.svg AppDir/usr/share/icons/hicolor/scalable/apps/
+cp com.fluxara.AVC.svg AppDir/
 
 # Create AppRun script
 cat > AppDir/AppRun << 'EOF'
@@ -36,7 +36,7 @@ if ! command -v ffmpeg &> /dev/null; then
     echo "On Arch: sudo pacman -S ffmpeg"
 fi
 
-exec "${HERE}/usr/bin/nova-converter" "$@"
+exec "${HERE}/usr/bin/fluxara-avc" "$@"
 EOF
 
 chmod +x AppDir/AppRun
@@ -49,6 +49,6 @@ if [ ! -f appimagetool-x86_64.AppImage ]; then
 fi
 
 # Build AppImage
-ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir nova-audio-video-converter-x86_64.AppImage
+ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir fluxara-avc-x86_64.AppImage
 
-echo "AppImage created: nova-audio-video-converter-x86_64.AppImage"
+echo "AppImage created: fluxara-avc-x86_64.AppImage"

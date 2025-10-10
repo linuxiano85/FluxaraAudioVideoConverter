@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# Build RPM package for Nova Audio/Video Converter
+# Build RPM package for Fluxara AVC
 
-echo "Building Nova Audio/Video Converter RPM package..."
+echo "Building Fluxara AVC RPM package..."
 
 # Install dependencies if needed
 if ! command -v rpmbuild &> /dev/null; then
@@ -16,7 +16,7 @@ rpmdev-setuptree || mkdir -p ~/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
 
 # Create source tarball
 VERSION="0.1.0"
-TARBALL="nova-audio-video-converter-${VERSION}.tar.gz"
+TARBALL="fluxara-avc-${VERSION}.tar.gz"
 
 cd ..
 tar --exclude='.git' --exclude='target' --exclude='AppDir' \
@@ -24,11 +24,11 @@ tar --exclude='.git' --exclude='target' --exclude='AppDir' \
 cd -
 
 # Copy spec file
-cp nova-audio-video-converter.spec ~/rpmbuild/SPECS/
+cp fluxara-avc.spec ~/rpmbuild/SPECS/
 
 # Build RPM
-rpmbuild -ba ~/rpmbuild/SPECS/nova-audio-video-converter.spec
+rpmbuild -ba ~/rpmbuild/SPECS/fluxara-avc.spec
 
 echo "RPM package built successfully!"
 echo "Package location: ~/rpmbuild/RPMS/"
-ls -lh ~/rpmbuild/RPMS/*/nova-audio-video-converter-*.rpm
+ls -lh ~/rpmbuild/RPMS/*/fluxara-avc-*.rpm

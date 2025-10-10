@@ -1,10 +1,10 @@
-app-id: com.nova.AudioVideoConverter
+app-id: com.fluxara.AVC
 runtime: org.freedesktop.Platform
 runtime-version: '23.08'
 sdk: org.freedesktop.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
-command: nova-converter
+command: fluxara-avc
 finish-args:
   - --share=ipc
   - --socket=fallback-x11
@@ -54,14 +54,14 @@ modules:
         url: https://bitbucket.org/multicoreware/x265_git/downloads/x265_3.5.tar.gz
         sha256: e70a3335cacacbba0b3a20ec6fecd6783932288ebc8163ad74bcc9606477cae8
 
-  - name: nova-audio-video-converter
+  - name: fluxara-avc
     buildsystem: simple
     build-commands:
       - cargo --offline fetch --manifest-path Cargo.toml --verbose
       - cargo --offline build --release --verbose
-      - install -Dm755 ./target/release/nova-converter -t /app/bin/
-      - install -Dm644 com.nova.AudioVideoConverter.desktop /app/share/applications/com.nova.AudioVideoConverter.desktop
-      - install -Dm644 com.nova.AudioVideoConverter.svg /app/share/icons/hicolor/scalable/apps/com.nova.AudioVideoConverter.svg
+      - install -Dm755 ./target/release/fluxara-avc -t /app/bin/
+      - install -Dm644 com.fluxara.AVC.desktop /app/share/applications/com.fluxara.AVC.desktop
+      - install -Dm644 com.fluxara.AVC.svg /app/share/icons/hicolor/scalable/apps/com.fluxara.AVC.svg
     sources:
       - type: dir
         path: .
