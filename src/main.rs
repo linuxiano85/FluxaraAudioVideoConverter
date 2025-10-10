@@ -7,6 +7,12 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use walkdir::WalkDir;
 
+mod ffmpeg;
+mod audio;
+mod video;
+mod capture;
+mod ai;
+
 #[derive(Parser)]
 #[command(name = "Nova Audio/Video Converter")]
 #[command(version = "0.1.0")]
@@ -47,6 +53,160 @@ enum Commands {
         /// Number of parallel jobs
         #[arg(short = 'j', long, default_value = "4")]
         jobs: usize,
+    },
+    /// Enhance audio with denoise, normalization, and compression
+    EnhanceAudio {
+        /// Input file
+        #[arg(short, long)]
+        input: PathBuf,
+        
+        /// Output file
+        #[arg(short, long)]
+        output: PathBuf,
+        
+        /// Enable denoising (afftdn)
+        #[arg(long, default_value = "true")]
+        denoise: bool,
+        
+        /// Enable loudness normalization
+        #[arg(long, default_value = "true")]
+        normalize: bool,
+        
+        /// High-pass filter frequency (Hz)
+        #[arg(long, default_value = "80")]
+        highpass: u32,
+        
+        /// Low-pass filter frequency (Hz, optional)
+        #[arg(long)]
+        lowpass: Option<u32>,
+        
+        /// Notch filter for hum removal (50 or 60 Hz)
+        #[arg(long)]
+        notch: Option<u32>,
+        
+        /// Enable compressor
+        #[arg(long, default_value = "true")]
+        compressor: bool,
+        
+        /// Enable noise gate
+        #[arg(long, default_value = "true")]
+        gate: bool,
+    },
+    /// Enhance video with deinterlace, stabilization, denoise, and sharpening
+    EnhanceVideo {
+        /// Input file
+        #[arg(short, long)]
+        input: PathBuf,
+        
+        /// Output file
+        #[arg(short, long)]
+        output: PathBuf,
+        
+        /// Enable deinterlacing (bwdif)
+        #[arg(long, default_value = "true")]
+        deinterlace: bool,
+        
+        /// Enable stabilization (deshake)
+        #[arg(long)]
+        stabilize: bool,
+        
+        /// Denoise type: none, hqdn3d, nlmeans
+        #[arg(long, default_value = "hqdn3d")]
+        denoise: String,
+        
+        /// Enable sharpening
+        #[arg(long, default_value = "true")]
+        sharpen: bool,
+        
+        /// Enable color adjustment
+        #[arg(long, default_value = "true")]
+        color: bool,
+        
+        /// Scale width
+        #[arg(long)]
+        width: Option<u32>,
+        
+        /// Scale height
+        #[arg(long)]
+        height: Option<u32>,
+        
+        /// Display aspect ratio (e.g., 4:3, 16:9)
+        #[arg(long)]
+        aspect: Option<String>,
+    },
+    /// VHS Rescue: One-click preset for analog capture cleanup
+    VhsRescue {
+        /// Input file
+        #[arg(short, long)]
+        input: PathBuf,
+        
+        /// Output file
+        #[arg(short, long)]
+        output: PathBuf,
+        
+        /// Notch filter for hum removal (50 or 60 Hz)
+        #[arg(long)]
+        notch: Option<u32>,
+    },
+    /// List available V4L2 video and ALSA audio capture devices
+    CaptureList,
+    /// Capture video and audio from V4L2/ALSA devices
+    Capture {
+        /// Output file
+        #[arg(short, long)]
+        output: PathBuf,
+        
+        /// Video device (e.g., /dev/video0)
+        #[arg(long, default_value = "/dev/video0")]
+        video_device: String,
+        
+        /// Audio device (e.g., hw:1,0)
+        #[arg(long, default_value = "hw:1,0")]
+        audio_device: String,
+        
+        /// Output format: mp4 or mkv
+        #[arg(long, default_value = "mp4")]
+        format: String,
+        
+        /// Enable deinterlacing
+        #[arg(long, default_value = "true")]
+        deinterlace: bool,
+        
+        /// Enable stabilization
+        #[arg(long)]
+        stabilize: bool,
+        
+        /// Denoise type: none, hqdn3d, nlmeans
+        #[arg(long)]
+        denoise: Option<String>,
+        
+        /// Video bitrate (e.g., 5M)
+        #[arg(long)]
+        vbitrate: Option<String>,
+        
+        /// CRF value (18-28, lower = better quality)
+        #[arg(long)]
+        crf: Option<u32>,
+        
+        /// Video width
+        #[arg(long)]
+        width: Option<u32>,
+        
+        /// Video height
+        #[arg(long)]
+        height: Option<u32>,
+        
+        /// Frame rate
+        #[arg(long)]
+        fps: Option<u32>,
+        
+        /// Audio bitrate (e.g., 192k)
+        #[arg(long, default_value = "192k")]
+        abitrate: String,
+        
+        /// Archival mode (lossless/near-lossless)
+        #[arg(long)]
+        archival: bool,
     },
     /// Clean and optimize media files
     Clean {
@@ -92,6 +252,140 @@ fn main() -> Result<()> {
             jobs,
         } => {
             convert_files(input, format, output.as_ref(), *recursive, quality, codec.as_ref(), *jobs)?;
+        }
+        Commands::EnhanceAudio {
+            input,
+            output,
+            denoise,
+            normalize,
+            highpass,
+            lowpass,
+            notch,
+            compressor,
+            gate,
+        } => {
+            let opts = audio::AudioEnhanceOptions {
+                denoise: *denoise,
+                normalize: *normalize,
+                highpass_freq: Some(*highpass),
+                lowpass_freq: *lowpass,
+                notch_freq: *notch,
+                compressor: *compressor,
+                gate: *gate,
+                gate_threshold: -50.0,
+            };
+            println!("{} Enhancing audio...", "✓".green());
+            audio::enhance_audio(input, output, &opts)?;
+            println!("{} Audio enhancement completed!", "✓".green());
+        }
+        Commands::EnhanceVideo {
+            input,
+            output,
+            deinterlace,
+            stabilize,
+            denoise,
+            sharpen,
+            color,
+            width,
+            height,
+            aspect,
+        } => {
+            let denoise_type = match denoise.as_str() {
+                "none" => video::DenoiseType::None,
+                "nlmeans" => video::DenoiseType::Nlmeans,
+                _ => video::DenoiseType::Hqdn3d,
+            };
+            let opts = video::VideoEnhanceOptions {
+                deinterlace: *deinterlace,
+                stabilize: *stabilize,
+                denoise: denoise_type,
+                sharpen: *sharpen,
+                color_adjust: *color,
+                scale_width: *width,
+                scale_height: *height,
+                aspect_ratio: aspect.clone(),
+            };
+            println!("{} Enhancing video...", "✓".green());
+            video::enhance_video(input, output, &opts)?;
+            println!("{} Video enhancement completed!", "✓".green());
+        }
+        Commands::VhsRescue { input, output, notch } => {
+            println!("{} Starting VHS Rescue...", "🎬".bright_cyan());
+            video::vhs_rescue(input, output, *notch)?;
+            println!("{} VHS Rescue completed!", "✓".green());
+        }
+        Commands::CaptureList => {
+            println!("{} Available V4L2 Video Devices:", "📹".bright_cyan());
+            match capture::list_video_devices() {
+                Ok(devices) => {
+                    if devices.is_empty() {
+                        println!("  {}", "No video devices found".yellow());
+                    } else {
+                        for dev in devices {
+                            println!("  • {}", dev.green());
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("  {} {}", "✗".red(), e);
+                }
+            }
+            println!();
+            println!("{} Available ALSA Audio Devices:", "🎤".bright_cyan());
+            match capture::list_audio_devices() {
+                Ok(devices) => {
+                    if devices.is_empty() {
+                        println!("  {}", "No audio devices found".yellow());
+                    } else {
+                        for dev in devices {
+                            println!("  • {}", dev.green());
+                        }
+                    }
+                }
+                Err(e) => {
+                    eprintln!("  {} {}", "✗".red(), e);
+                }
+            }
+        }
+        Commands::Capture {
+            output,
+            video_device,
+            audio_device,
+            format,
+            deinterlace,
+            stabilize,
+            denoise,
+            vbitrate,
+            crf,
+            width,
+            height,
+            fps,
+            abitrate,
+            archival,
+        } => {
+            let capture_format = match format.as_str() {
+                "mkv" => capture::CaptureFormat::Mkv,
+                _ => capture::CaptureFormat::Mp4,
+            };
+            let opts = capture::CaptureOptions {
+                format: capture_format,
+                video_device: video_device.clone(),
+                audio_device: audio_device.clone(),
+                deinterlace: *deinterlace,
+                stabilize: *stabilize,
+                denoise: denoise.clone(),
+                video_bitrate: vbitrate.clone(),
+                crf: *crf,
+                width: *width,
+                height: *height,
+                fps: *fps,
+                audio_bitrate: abitrate.clone(),
+                archival_mode: *archival,
+            };
+            println!("{} Starting capture from {} and {}...", "📹".bright_cyan(), video_device, audio_device);
+            println!("{}", "Press Ctrl+C to stop recording".yellow());
+            capture::capture(output, &opts)?;
+            println!("{} Capture completed!", "✓".green());
         }
         Commands::Clean {
             input,
@@ -397,12 +691,5 @@ fn is_audio_format(format: &str) -> bool {
 }
 
 fn check_ffmpeg() -> Result<()> {
-    Command::new("ffmpeg")
-        .arg("-version")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .context("FFmpeg is not installed. Please install FFmpeg to use this tool.")?;
-    
-    Ok(())
+    ffmpeg::check_ffmpeg()
 }

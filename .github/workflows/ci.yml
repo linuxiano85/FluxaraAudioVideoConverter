@@ -1,0 +1,82 @@
+name: Linux CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg v4l-utils alsa-utils
+        
+    - name: Verify FFmpeg installation
+      run: |
+        ffmpeg -version
+        ffprobe -version
+        
+    - name: Install Rust toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+        components: rustfmt, clippy
+        
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/registry
+        key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Cache cargo index
+      uses: actions/cache@v4
+      with:
+        path: ~/.cargo/git
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Cache cargo build
+      uses: actions/cache@v4
+      with:
+        path: target
+        key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Check formatting
+      run: cargo fmt -- --check
+      
+    - name: Run clippy
+      run: cargo clippy -- -D warnings -A dead_code -A unused_variables
+      
+    - name: Build (debug)
+      run: cargo build --verbose
+      
+    - name: Run tests
+      run: cargo test --verbose
+      
+    - name: Build (release)
+      run: cargo build --release --verbose
+      
+    - name: Test CLI help
+      run: ./target/release/nova-converter --help
+      
+    - name: Test list formats
+      run: ./target/release/nova-converter formats
+      
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: nova-converter-linux
+        path: target/release/nova-converter
+        retention-days: 7
