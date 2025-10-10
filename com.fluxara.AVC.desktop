@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Fluxara AVC
+Comment=Linux-first analog restoration & conversion with FFmpeg
+Exec=fluxara-avc
+Icon=com.fluxara.AVC
+Terminal=true
+Type=Application
+Categories=AudioVideo;Audio;Video;Multimedia;
+Keywords=converter;audio;video;media;transcode;vhs;analog;restoration;ffmpeg;

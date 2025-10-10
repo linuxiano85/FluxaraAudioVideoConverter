@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Film/video frame -->
+    <rect x="3" y="5" width="14" height="14" rx="1"/>
+    <!-- Frame details -->
+    <line x1="6" y1="5" x2="6" y2="19"/>
+    <line x1="14" y1="5" x2="14" y2="19"/>
+    <!-- Enhancement sparkle -->
+    <path d="M 19 8 L 20 10 L 22 11 L 20 12 L 19 14 L 18 12 L 16 11 L 18 10 Z" fill="currentColor"/>
+  </g>
+</svg>

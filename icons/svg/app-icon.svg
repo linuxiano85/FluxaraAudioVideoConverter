@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fluxara-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4F46E5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="128" cy="128" r="112" fill="url(#fluxara-gradient)"/>
+  
+  <!-- Waveform symbol -->
+  <g stroke="#FFFFFF" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Left wave -->
+    <path d="M 48 128 Q 60 96, 72 128 T 96 128"/>
+    <!-- Center wave (larger) -->
+    <path d="M 100 128 Q 116 80, 128 128 T 156 128"/>
+    <!-- Right wave -->
+    <path d="M 160 128 Q 172 96, 184 128 T 208 128"/>
+  </g>
+  
+  <!-- Film strip element -->
+  <g fill="#FFFFFF">
+    <rect x="72" y="160" width="112" height="32" rx="4"/>
+    <rect x="80" y="164" width="16" height="8" fill="url(#fluxara-gradient)"/>
+    <rect x="104" y="164" width="16" height="8" fill="url(#fluxara-gradient)"/>
+    <rect x="128" y="164" width="16" height="8" fill="url(#fluxara-gradient)"/>
+    <rect x="152" y="164" width="16" height="8" fill="url(#fluxara-gradient)"/>
+    <rect x="80" y="180" width="16" height="8" fill="url(#fluxara-gradient)"/>
+    <rect x="104" y="180" width="16" height="8" fill="url(#fluxara-gradient)"/>
+    <rect x="128" y="180" width="16" height="8" fill="url(#fluxara-gradient)"/>
+    <rect x="152" y="180" width="16" height="8" fill="url(#fluxara-gradient)"/>
+  </g>
+</svg>

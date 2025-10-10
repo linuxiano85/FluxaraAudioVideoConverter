@@ -1,6 +1,6 @@
 # Building and Packaging Guide
 
-This document provides detailed instructions for building Nova Audio/Video Converter from source and creating distribution packages.
+This document provides detailed instructions for building Fluxara AVC from source and creating distribution packages.
 
 ## Prerequisites
 
@@ -34,25 +34,25 @@ sudo pacman -S base-devel rust cargo ffmpeg
 cargo build
 ```
 
-The binary will be in `target/debug/nova-converter`
+The binary will be in `target/debug/fluxara-avc`
 
 ### Release Build (Optimized)
 ```bash
 cargo build --release
 ```
 
-The optimized binary will be in `target/release/nova-converter`
+The optimized binary will be in `target/release/fluxara-avc`
 
 ### Testing the Application
 ```bash
 # Show help
-./target/release/nova-converter --help
+./target/release/fluxara-avc --help
 
 # List supported formats
-./target/release/nova-converter formats
+./target/release/fluxara-avc formats
 
 # Convert a file (requires FFmpeg)
-./target/release/nova-converter convert --input input.mp3 --format wav
+./target/release/fluxara-avc convert --input input.mp3 --format wav
 ```
 
 ## Creating Distribution Packages
@@ -95,17 +95,17 @@ python3 flatpak-cargo-generator.py Cargo.lock -o cargo-sources.json
 
 3. Build the Flatpak:
 ```bash
-flatpak-builder --force-clean --repo=repo build-dir com.nova.AudioVideoConverter.yml
+flatpak-builder --force-clean --repo=repo build-dir com.fluxara.AVC.yml
 ```
 
 4. Install locally:
 ```bash
-flatpak-builder --user --install --force-clean build-dir com.nova.AudioVideoConverter.yml
+flatpak-builder --user --install --force-clean build-dir com.fluxara.AVC.yml
 ```
 
 5. Run the application:
 ```bash
-flatpak run com.nova.AudioVideoConverter
+flatpak run com.fluxara.AVC
 ```
 
 ### AppImage
@@ -122,12 +122,12 @@ AppImage provides a portable application format that works on most Linux distrib
 ./build-appimage.sh
 ```
 
-This creates `nova-audio-video-converter-x86_64.AppImage`
+This creates `fluxara-avc-x86_64.AppImage`
 
 #### Usage
 ```bash
-chmod +x nova-audio-video-converter-x86_64.AppImage
-./nova-audio-video-converter-x86_64.AppImage --help
+chmod +x fluxara-avc-x86_64.AppImage
+./fluxara-avc-x86_64.AppImage --help
 ```
 
 ### DEB Package
@@ -144,11 +144,11 @@ sudo apt install build-essential debhelper devscripts cargo rustc
 ./build-deb.sh
 ```
 
-The package will be created in the parent directory as `nova-audio-video-converter_0.1.0-1_amd64.deb`
+The package will be created in the parent directory as `fluxara-avc_0.1.0-1_amd64.deb`
 
 #### Installation
 ```bash
-sudo dpkg -i ../nova-audio-video-converter_0.1.0-1_amd64.deb
+sudo dpkg -i ../fluxara-avc_0.1.0-1_amd64.deb
 sudo apt-get install -f  # Install dependencies if needed
 ```
 
@@ -170,15 +170,15 @@ sudo zypper install rpm-build rpmdevtools cargo rust
 ./build-rpm.sh
 ```
 
-The package will be created in `~/rpmbuild/RPMS/x86_64/nova-audio-video-converter-0.1.0-1.x86_64.rpm`
+The package will be created in `~/rpmbuild/RPMS/x86_64/fluxara-avc-0.1.0-1.x86_64.rpm`
 
 #### Installation
 ```bash
 # Fedora/RHEL/CentOS
-sudo dnf install ~/rpmbuild/RPMS/x86_64/nova-audio-video-converter-0.1.0-1.x86_64.rpm
+sudo dnf install ~/rpmbuild/RPMS/x86_64/fluxara-avc-0.1.0-1.x86_64.rpm
 
 # openSUSE
-sudo zypper install ~/rpmbuild/RPMS/x86_64/nova-audio-video-converter-0.1.0-1.x86_64.rpm
+sudo zypper install ~/rpmbuild/RPMS/x86_64/fluxara-avc-0.1.0-1.x86_64.rpm
 ```
 
 ## Advanced Build Options
@@ -240,8 +240,8 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v2
         with:
-          name: nova-converter
-          path: target/release/nova-converter
+          name: fluxara-avc
+          path: target/release/fluxara-avc
 ```
 
 ## Troubleshooting
@@ -281,7 +281,7 @@ On a typical system with 8 cores:
 
 ## Security Considerations
 
-- Nova Converter executes FFmpeg as a subprocess
+- Fluxara AVC executes FFmpeg as a subprocess
 - File permissions are preserved during conversion
 - No network access required for core functionality
 - All operations are performed locally
@@ -289,11 +289,11 @@ On a typical system with 8 cores:
 ## Future Improvements
 
 Planned features:
-- GUI interface using GTK or Qt
-- Video thumbnails and previews
-- Preset configurations for common scenarios
-- Integration with file managers (Nautilus, Dolphin)
-- Cloud storage support (optional)
+- GUI interface using GTK4/Libadwaita (see docs/ui/GUI-concept.md)
+- Live capture from V4L2/ALSA devices
+- VHS Rescue preset with one-command restoration
+- Batch workflow presets
+- Advanced analog restoration filters
 
 ## Support
 
