@@ -57,7 +57,7 @@ pub fn build_audio_filters(opts: &AudioEnhanceOptions) -> Vec<String> {
     // Gate to reduce background noise
     if opts.gate {
         filters.push(format!(
-            "agate=threshold={}:ratio=3:attack=20:release=250",
+            "agate=threshold={}dB:ratio=3:attack=20:release=250",
             opts.gate_threshold
         ));
     }
