@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+  <g stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Camera/capture device -->
+    <rect x="2" y="6" width="20" height="14" rx="2"/>
+    <circle cx="12" cy="13" r="3"/>
+    <!-- Recording indicator -->
+    <circle cx="18" cy="9" r="1.5" fill="currentColor"/>
+    <!-- Lens flare -->
+    <path d="M 9 13 L 8 12"/>
+  </g>
+</svg>

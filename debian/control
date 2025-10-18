@@ -1,7 +1,7 @@
-Source: nova-audio-video-converter
+Source: fluxara-avc
 Section: sound
 Priority: optional
-Maintainer: Nova Team <nova@example.com>
+Maintainer: Fluxara Team <fluxara@example.com>
 Build-Depends: debhelper-compat (= 13),
                cargo,
                rustc (>= 1.70),
@@ -10,16 +10,15 @@ Build-Depends: debhelper-compat (= 13),
 Standards-Version: 4.6.0
 Homepage: https://github.com/linuxiano85/NovaAudioVideoConverter
 
-Package: nova-audio-video-converter
+Package: fluxara-avc
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, ffmpeg
-Description: Modern high-performance audio and video converter
- Nova Audio/Video Converter is a modern, high-performance command-line
- tool for converting audio and video files between various formats.
+Description: Linux-first analog restoration & conversion with FFmpeg
+ Fluxara AVC is a Linux-first analog restoration and conversion toolkit
+ built on FFmpeg, specializing in VHS rescue and vintage media digitization.
  .
  Features:
-  * Support for multiple audio formats (MP3, FLAC, WAV, OGG, etc.)
-  * Support for multiple video formats (MP4, AVI, MKV, WEBM, etc.)
-  * Parallel processing for batch conversions
-  * Media file cleaning and optimization
-  * File information display
+  * VHS tape digitization with noise reduction and deinterlacing
+  * Audio cassette restoration with cleanup filters
+  * Batch conversion with parallel processing
+  * Flexible media conversion between dozens of formats

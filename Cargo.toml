@@ -1,13 +1,13 @@
 [package]
-name = "nova_audio_video_converter"
+name = "fluxara-avc"
 version = "0.1.0"
 edition = "2021"
-authors = ["Nova Team"]
-description = "A modern, high-performance audio and video converter"
+authors = ["Fluxara Team"]
+description = "Fluxara AVC – Linux-first analog restoration & conversion with FFmpeg"
 license = "MIT"
 
 [[bin]]
-name = "nova-converter"
+name = "fluxara-avc"
 path = "src/main.rs"
 
 [dependencies]

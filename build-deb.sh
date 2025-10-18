@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-# Build DEB package for Nova Audio/Video Converter
+# Build DEB package for Fluxara AVC
 
-echo "Building Nova Audio/Video Converter DEB package..."
+echo "Building Fluxara AVC DEB package..."
 
 # Install dependencies if needed
 if ! command -v dpkg-buildpackage &> /dev/null; then
@@ -16,4 +16,4 @@ fi
 dpkg-buildpackage -us -uc -b
 
 echo "DEB package built successfully!"
-echo "Package location: ../nova-audio-video-converter_*.deb"
+echo "Package location: ../fluxara-avc_*.deb"

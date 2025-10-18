@@ -1,9 +1,9 @@
-nova-audio-video-converter (0.1.0-1) unstable; urgency=low
+fluxara-avc (0.1.0-1) unstable; urgency=low
 
-  * Initial release.
-  * Modern Rust-based audio/video converter
-  * Support for multiple formats
-  * Parallel processing capabilities
-  * Media file cleaning and optimization
+  * Initial release of Fluxara AVC
+  * Rebrand from NovaAudioVideoConverter
+  * Linux-first analog restoration toolkit
+  * VHS rescue and vintage media digitization
+  * Built on FFmpeg with Rust
 
- -- Nova Team <nova@example.com>  Thu, 09 Oct 2025 20:00:00 +0000
+ -- Fluxara Team <fluxara@example.com>  Thu, 10 Oct 2025 18:00:00 +0000

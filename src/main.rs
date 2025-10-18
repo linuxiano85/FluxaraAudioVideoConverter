@@ -14,9 +14,9 @@ mod ffmpeg;
 mod video;
 
 #[derive(Parser)]
-#[command(name = "Nova Audio/Video Converter")]
+#[command(name = "Fluxara AVC")]
 #[command(version = "0.1.0")]
-#[command(about = "A modern, high-performance audio and video converter", long_about = None)]
+#[command(about = "Fluxara AVC – Linux-first analog restoration & conversion with FFmpeg", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -424,22 +424,10 @@ fn main() -> Result<()> {
 }
 
 fn print_banner() {
-    println!(
-        "{}",
-        "╔══════════════════════════════════════════╗".bright_cyan()
-    );
-    println!(
-        "{}",
-        "║   Nova Audio/Video Converter v0.1.0     ║".bright_cyan()
-    );
-    println!(
-        "{}",
-        "║   High-Performance Media Converter       ║".bright_cyan()
-    );
-    println!(
-        "{}",
-        "╚══════════════════════════════════════════╝".bright_cyan()
-    );
+    println!("{}", "╔══════════════════════════════════════════╗".bright_cyan());
+    println!("{}", "║        Fluxara AVC v0.1.0               ║".bright_cyan());
+    println!("{}", "║   Linux-first Analog Restoration        ║".bright_cyan());
+    println!("{}", "╚══════════════════════════════════════════╝".bright_cyan());
     println!();
 }
 
