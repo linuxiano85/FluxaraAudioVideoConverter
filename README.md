@@ -10,7 +10,16 @@
 
 ## What is Fluxara AVC?
 
-Fluxara AVC is a powerful command-line tool for converting and restoring analog media on Linux. Built on FFmpeg, it specializes in:
+- 🎵 **Multiple Audio Formats**: MP3, FLAC, WAV, OGG, M4A, AAC, WMA
+- 🎬 **Multiple Video Formats**: MP4, AVI, MKV, WEBM, MOV, FLV, WMV
+- ⚡ **High Performance**: Multi-threaded parallel processing for batch conversions
+- 🎬 **VHS Rescue**: One-click preset for analog capture cleanup
+- 🎤 **Linux Capture**: Record from V4L2 video and ALSA audio devices
+- 🔧 **Audio Enhancement**: Denoise, normalize, compress, and remove hum
+- 🎨 **Video Enhancement**: Deinterlace, stabilize, denoise, sharpen, and color adjust
+- 🧹 **Media Cleaning**: Remove metadata and optimize file sizes
+- 📊 **File Information**: Display detailed media file information
+- 🎨 **Modern CLI**: Beautiful colored output with progress indicators
 
 - **VHS tape digitization** with noise reduction and deinterlacing
 - **Audio cassette restoration** with cleanup filters
@@ -28,6 +37,9 @@ Whether you're digitizing old family videos or managing a media library, Fluxara
 git clone https://github.com/linuxiano85/NovaAudioVideoConverter.git
 cd NovaAudioVideoConverter
 
+# Install dependencies (FFmpeg, v4l-utils, alsa-utils)
+./scripts/install-deps.sh
+
 # Build with Cargo
 cargo build --release
 
@@ -37,8 +49,25 @@ sudo cp target/release/fluxara-avc /usr/local/bin/
 
 ### System Requirements
 
-**Required:**
-- **FFmpeg**: `sudo apt install ffmpeg` (Ubuntu/Debian) or `sudo dnf install ffmpeg` (Fedora)
+- **Linux**: Ubuntu 20.04+, Fedora 35+, Arch Linux, or compatible distribution
+- **FFmpeg**: Required for media conversion and capture
+  - Ubuntu/Debian: `sudo apt install ffmpeg v4l-utils alsa-utils`
+  - Fedora: `sudo dnf install ffmpeg v4l-utils alsa-utils`
+  - Arch: `sudo pacman -S ffmpeg v4l-utils alsa-utils`
+
+### Device Permissions
+
+For video capture from V4L2 devices:
+```bash
+sudo usermod -aG video $USER
+```
+
+For audio capture from ALSA devices:
+```bash
+sudo usermod -aG audio $USER
+```
+
+**Note**: You need to log out and back in for group changes to take effect.
 
 **Recommended for capture:**
 - **v4l-utils**: Video4Linux utilities for video capture
@@ -95,9 +124,135 @@ fluxara-avc convert -i song.wav -f mp3 -q 320k
 fluxara-avc convert -i ./videos -f mp4 -c libx265 -r -j 8
 ```
 
-### Clean
+### Audio Enhancement
 
-Remove metadata and optimize media files without re-encoding.
+Enhance audio with denoise, normalization, and compression:
+```bash
+nova-converter enhance-audio \
+  --input old-recording.wav \
+  --output enhanced.wav \
+  --denoise \
+  --normalize \
+  --highpass 80 \
+  --notch 60  # Remove 60 Hz hum (use 50 for EU/other regions)
+```
+
+Options:
+- `--denoise`: Apply FFT-based denoising
+- `--normalize`: Loudness normalization (EBU R128)
+- `--highpass <freq>`: Remove low-frequency rumble
+- `--lowpass <freq>`: Remove high-frequency noise
+- `--notch <50|60>`: Remove AC hum at 50 or 60 Hz
+- `--compressor`: Dynamic range compression
+- `--gate`: Noise gate
+
+### Video Enhancement
+
+Enhance video with deinterlacing, stabilization, and cleanup:
+```bash
+nova-converter enhance-video \
+  --input old-video.avi \
+  --output enhanced.mp4 \
+  --deinterlace \
+  --stabilize \
+  --denoise hqdn3d \
+  --sharpen \
+  --color
+```
+
+Options:
+- `--deinterlace`: Deinterlace using bwdif (Bob Weaver)
+- `--stabilize`: Stabilize shaky footage (deshake)
+- `--denoise <type>`: Denoise (none, hqdn3d, nlmeans)
+- `--sharpen`: Sharpen using unsharp mask
+- `--color`: Adjust brightness and saturation
+- `--width` / `--height`: Scale video
+- `--aspect <ratio>`: Set display aspect ratio (e.g., 4:3, 16:9)
+
+### VHS Rescue
+
+One-click preset for analog VHS capture cleanup:
+```bash
+nova-converter vhs-rescue \
+  --input vhs-capture.avi \
+  --output restored.mp4 \
+  --notch 60  # Use 50 for EU/other regions
+```
+
+This applies:
+- **Video**: Deinterlace, stabilize, denoise (hqdn3d), sharpen, color adjust, 4:3 aspect
+- **Audio**: High-pass (80 Hz), low-pass (15 kHz), denoise, hum removal, gate, compressor, loudness normalization
+
+Perfect for:
+- VHS tapes
+- Hi8/Video8
+- Betamax
+- Other analog video sources
+
+### Device Capture
+
+List available capture devices:
+```bash
+nova-converter capture-list
+```
+
+Capture from V4L2 video and ALSA audio:
+```bash
+nova-converter capture \
+  --output recording.mp4 \
+  --video-device /dev/video0 \
+  --audio-device hw:1,0 \
+  --deinterlace \
+  --width 720 \
+  --height 480 \
+  --fps 30
+```
+
+Archival capture (near-lossless):
+```bash
+nova-converter capture \
+  --output archive.mkv \
+  --format mkv \
+  --video-device /dev/video0 \
+  --audio-device hw:1,0 \
+  --archival \
+  --deinterlace
+```
+
+Capture options:
+- `--format <mp4|mkv>`: Output container format
+- `--deinterlace`: Apply deinterlacing during capture
+- `--stabilize`: Apply stabilization during capture
+- `--denoise <type>`: Apply denoising (hqdn3d or nlmeans)
+- `--vbitrate <rate>`: Video bitrate (e.g., 5M)
+- `--crf <value>`: CRF quality (18-28, lower = better)
+- `--abitrate <rate>`: Audio bitrate (e.g., 192k)
+- `--archival`: Near-lossless archival mode (MKV + PCM audio)
+
+**Common VHS Capture Settings:**
+```bash
+# Standard capture (good quality, smaller file)
+nova-converter capture \
+  --output vhs-tape-01.mp4 \
+  --video-device /dev/video0 \
+  --audio-device hw:1,0 \
+  --deinterlace \
+  --width 720 \
+  --height 480 \
+  --fps 30 \
+  --crf 18
+
+# Archival capture (best quality, large file)
+nova-converter capture \
+  --output vhs-tape-01-archive.mkv \
+  --format mkv \
+  --video-device /dev/video0 \
+  --audio-device hw:1,0 \
+  --deinterlace \
+  --archival
+```
+
+### Clean Media Files
 
 ```bash
 fluxara-avc clean [OPTIONS]
@@ -184,6 +339,7 @@ Filters explained:
 
 ### List Available Devices
 
+Install FFmpeg:
 ```bash
 # Video devices
 v4l2-ctl --list-devices
@@ -196,6 +352,7 @@ arecord -l
 
 Use FFmpeg directly to capture from Video4Linux2 and ALSA:
 
+Check device permissions:
 ```bash
 # Capture from /dev/video0 with audio from hw:1,0
 ffmpeg -f v4l2 -input_format uyvy422 -video_size 720x480 -i /dev/video0 \

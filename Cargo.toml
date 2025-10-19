@@ -20,6 +20,8 @@ indicatif = "0.17"
 colored = "2.1"
 walkdir = "2.5"
 rayon = "1.10"
+which = "6.0"
+regex = "1.10"
 
 [profile.release]
 opt-level = 3
