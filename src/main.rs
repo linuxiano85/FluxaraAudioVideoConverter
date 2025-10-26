@@ -273,6 +273,7 @@ fn main() -> Result<()> {
             highpass,
             lowpass,
             notch,
+            audio_only,
             compressor,
             gate,
         } => {
