@@ -2,7 +2,7 @@
 
 🎬 **Linux-first analog restoration & conversion with FFmpeg**
 
-> **Note**: This project was previously named **NovaAudioVideoConverter**. The repository will be renamed to `fluxara-avc` by the owner after this rebrand PR is merged. GitHub will create automatic redirects from the old URL.
+> **Note**: This project was previously named **NovaAudioVideoConverter**. The repository has been renamed to `FluxaraAudioVideoConverter` (new URL: https://github.com/linuxiano85/FluxaraAudioVideoConverter). GitHub will create automatic redirects from the old URL.
 
 ![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -34,8 +34,8 @@ Whether you're digitizing old family videos or managing a media library, Fluxara
 
 ```bash
 # Clone the repository
-git clone https://github.com/linuxiano85/NovaAudioVideoConverter.git
-cd NovaAudioVideoConverter
+git clone https://github.com/linuxiano85/FluxaraAudioVideoConverter.git
+cd FluxaraAudioVideoConverter
 
 # Install dependencies (FFmpeg, v4l-utils, alsa-utils)
 ./scripts/install-deps.sh

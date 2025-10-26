@@ -1,9 +1,9 @@
 #!/bin/bash
-# Install dependencies for NovaAudioVideoConverter on Linux
+ # Install dependencies for FluxaraAudioVideoConverter on Linux
 
 set -e
 
-echo "Installing NovaAudioVideoConverter dependencies..."
+echo "Installing FluxaraAudioVideoConverter dependencies..."
 
 # Detect distribution
 if [ -f /etc/os-release ]; then

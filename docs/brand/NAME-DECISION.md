@@ -18,7 +18,7 @@ The name **Fluxara** was chosen to represent the comprehensive suite of analog m
 
 ## Previous Name
 
-This project was previously known as **NovaAudioVideoConverter**. The rebrand to Fluxara reflects:
+This project was previously known as **NovaAudioVideoConverter**. The rebrand to Fluxara (repository now at `linuxiano85/FluxaraAudioVideoConverter`) reflects:
 
 1. **Expanded Vision**: Moving beyond generic conversion to specialized analog restoration
 2. **Suite Identity**: Positioning for future expansion (fluxara-avc, fluxara-capture, etc.)
@@ -97,7 +97,7 @@ Built on FFmpeg, Fluxara provides:
 
 ### Current
 
-- GitHub: `linuxiano85/NovaAudioVideoConverter`
+- GitHub: `linuxiano85/FluxaraAudioVideoConverter` (previously `linuxiano85/NovaAudioVideoConverter`)
 - Will be renamed to: `linuxiano85/fluxara-avc`
 
 ### After Rename
