@@ -128,7 +128,7 @@ fluxara-avc convert -i ./videos -f mp4 -c libx265 -r -j 8
 
 Enhance audio with denoise, normalization, and compression:
 ```bash
-nova-converter enhance-audio \
+fluxara-avc enhance-audio \
   --input old-recording.wav \
   --output enhanced.wav \
   --denoise \
@@ -150,7 +150,7 @@ Options:
 
 Enhance video with deinterlacing, stabilization, and cleanup:
 ```bash
-nova-converter enhance-video \
+fluxara-avc enhance-video \
   --input old-video.avi \
   --output enhanced.mp4 \
   --deinterlace \
@@ -173,7 +173,7 @@ Options:
 
 One-click preset for analog VHS capture cleanup:
 ```bash
-nova-converter vhs-rescue \
+fluxara-avc vhs-rescue \
   --input vhs-capture.avi \
   --output restored.mp4 \
   --notch 60  # Use 50 for EU/other regions
@@ -193,12 +193,12 @@ Perfect for:
 
 List available capture devices:
 ```bash
-nova-converter capture-list
+fluxara-avc capture-list
 ```
 
 Capture from V4L2 video and ALSA audio:
 ```bash
-nova-converter capture \
+fluxara-avc capture \
   --output recording.mp4 \
   --video-device /dev/video0 \
   --audio-device hw:1,0 \
@@ -210,7 +210,7 @@ nova-converter capture \
 
 Archival capture (near-lossless):
 ```bash
-nova-converter capture \
+fluxara-avc capture \
   --output archive.mkv \
   --format mkv \
   --video-device /dev/video0 \
@@ -232,7 +232,7 @@ Capture options:
 **Common VHS Capture Settings:**
 ```bash
 # Standard capture (good quality, smaller file)
-nova-converter capture \
+fluxara-avc capture \
   --output vhs-tape-01.mp4 \
   --video-device /dev/video0 \
   --audio-device hw:1,0 \
@@ -243,7 +243,7 @@ nova-converter capture \
   --crf 18
 
 # Archival capture (best quality, large file)
-nova-converter capture \
+fluxara-avc capture \
   --output vhs-tape-01-archive.mkv \
   --format mkv \
   --video-device /dev/video0 \

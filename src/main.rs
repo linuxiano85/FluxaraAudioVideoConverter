@@ -613,27 +613,12 @@ fn clean_files(input: &Path, remove_metadata: bool, optimize: bool, recursive: b
 }
 
 fn show_info(input: &Path) -> Result<()> {
-    check_ffmpeg()?;
+    ffmpeg::check_ffprobe()?;
 
     println!("{} File: {}", "ℹ".bright_blue(), input.display());
     println!();
 
-    let output = Command::new("ffprobe")
-        .arg("-v")
-        .arg("quiet")
-        .arg("-print_format")
-        .arg("json")
-        .arg("-show_format")
-        .arg("-show_streams")
-        .arg(input)
-        .output()
-        .context("Failed to execute ffprobe")?;
-
-    if !output.status.success() {
-        anyhow::bail!("Failed to get file information");
-    }
-
-    let info: serde_json::Value = serde_json::from_slice(&output.stdout)?;
+    let info = ffmpeg::get_media_info(input)?;
 
     if let Some(format) = info.get("format") {
         if let Some(duration) = format.get("duration").and_then(|d| d.as_str()) {
