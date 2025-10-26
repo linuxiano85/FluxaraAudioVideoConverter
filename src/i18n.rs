@@ -3,17 +3,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::fmt;
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[allow(dead_code)]
 pub enum Locale {
+    #[default]
     En,
     It,
-}
-
-impl Default for Locale {
-    fn default() -> Self {
-        Locale::En
-    }
 }
 
 #[allow(dead_code)]
