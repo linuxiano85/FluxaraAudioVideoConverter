@@ -79,6 +79,7 @@ pub fn build_filtergraph(filters: &[&str]) -> String {
 }
 
 /// Build a complex filtergraph with multiple inputs/outputs
+#[allow(dead_code)]
 pub fn build_complex_filtergraph(
     video_filters: &[&str],
     audio_filters: &[&str],
@@ -99,6 +100,7 @@ pub fn build_complex_filtergraph(
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct DeviceCaps {
     pub width: u32,
     pub height: u32,
@@ -107,6 +109,7 @@ pub struct DeviceCaps {
 }
 
 /// Probe device capabilities (stub for now - would need v4l2-ctl integration)
+#[allow(dead_code)]
 pub fn probe_device_caps(_device: &str) -> Result<DeviceCaps> {
     // For now, return default capabilities
     // In a full implementation, this would call v4l2-ctl or parse ffmpeg output

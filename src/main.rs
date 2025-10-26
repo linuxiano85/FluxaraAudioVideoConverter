@@ -12,6 +12,7 @@ mod audio;
 mod capture;
 mod ffmpeg;
 mod video;
+mod gui; // Add this line
 
 #[derive(Parser)]
 #[command(name = "Fluxara AVC")]
@@ -238,6 +239,8 @@ enum Commands {
     },
     /// List supported formats
     Formats,
+    /// Launch the graphical user interface
+    Gui,
 }
 
 #[tokio::main]
@@ -428,6 +431,10 @@ async fn main() -> Result<()> {
         }
         Commands::Formats => {
             list_formats();
+        }
+        Commands::Gui => {
+            println!("{} Launching GUI...", "🚀".bright_magenta());
+            gui::run().context("Failed to launch GUI")?;
         }
     }
 
