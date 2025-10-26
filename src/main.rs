@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use colored::*;
-use futures::future::join_all;
 
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -449,6 +448,9 @@ fn print_banner() {
     println!();
 }
 
+use indicatif::{ProgressBar, ProgressStyle};
+use futures::stream::{self, StreamExt};
+
 pub async fn convert_files(
     input: &Path,
     format: &str,
@@ -456,7 +458,7 @@ pub async fn convert_files(
     recursive: bool,
     quality: &str,
     codec: Option<&String>,
-    _jobs: usize, // jobs parameter is no longer directly used for rayon, but kept for compatibility
+    jobs: usize,
 ) -> Result<()> {
     check_ffmpeg()?;
 
@@ -477,36 +479,55 @@ pub async fn convert_files(
     println!("{} Found {} file(s) to convert", "✓".green(), files.len());
     println!();
 
-    let mut tasks = Vec::new();
-    for file in files {
-        let output_dir_clone = output_dir.to_path_buf();
-        let format_clone = format.to_string();
-        let quality_clone = quality.to_string();
-        let codec_clone = codec.map(|s| s.to_string());
+    let pb = ProgressBar::new(files.len() as u64);
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template(
+                "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta}) {msg}",
+            )?
+            .progress_chars("#>-"),
+    );
 
-        tasks.push(tokio::spawn(async move {
-            match convert_file(
-                &file,
-                &format_clone,
-                &output_dir_clone,
-                &quality_clone,
-                codec_clone.as_ref(),
-            )
-            .await
-            {
-                Ok(_) => {
-                    println!("{} Converted: {}", "✓".green(), file.display());
-                    Ok(())
-                }
-                Err(e) => {
-                    eprintln!("{} Failed to convert {}: {}", "✗".red(), file.display(), e);
-                    Err(e)
-                }
-            }
-        }));
-    }
+    stream::iter(files)
+        .map(|file| {
+            let output_dir_clone = output_dir.to_path_buf();
+            let format_clone = format.to_string();
+            let quality_clone = quality.to_string();
+            let codec_clone = codec.map(|s| s.to_string());
+            let pb_clone = pb.clone();
 
-    join_all(tasks).await;
+            tokio::spawn(async move {
+                let result = convert_file(
+                    &file,
+                    &format_clone,
+                    &output_dir_clone,
+                    &quality_clone,
+                    codec_clone.as_ref(),
+                )
+                .await;
+                pb_clone.inc(1);
+                match result {
+                    Ok(_) => {
+                        pb_clone.println(format!("{} Converted: {}", "✓".green(), file.display()));
+                        Ok(())
+                    }
+                    Err(e) => {
+                        pb_clone.println(format!(
+                            "{} Failed to convert {}: {}",
+                            "✗".red(),
+                            file.display(),
+                            e
+                        ));
+                        Err(e)
+                    }
+                }
+            })
+        })
+        .buffer_unordered(jobs)
+        .collect::<Vec<_>>()
+        .await;
+
+    pb.finish_with_message("Conversion completed!");
 
     println!();
     println!("{} Conversion completed!", "✓".green());
@@ -564,6 +585,16 @@ fn clean_files(input: &Path, remove_metadata: bool, optimize: bool, recursive: b
     }
 
     println!("{} Found {} file(s) to clean", "✓".green(), files.len());
+    println!();
+
+    let pb = ProgressBar::new(files.len() as u64);
+    pb.set_style(
+        ProgressStyle::default_bar()
+            .template(
+                "{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta}) {msg}",
+            )?
+            .progress_chars("#>-"),
+    );
 
     for file in &files {
         let output_file = file.with_extension(format!(
@@ -592,24 +623,27 @@ fn clean_files(input: &Path, remove_metadata: bool, optimize: bool, recursive: b
 
         match cmd.output() {
             Ok(output) if output.status.success() => {
-                println!("{} Cleaned: {}", "✓".green(), file.display());
+                pb.println(format!("{} Cleaned: {}", "✓".green(), file.display()));
                 std::fs::remove_file(file)?;
                 std::fs::rename(&output_file, file)?;
             }
             Ok(output) => {
                 let error = String::from_utf8_lossy(&output.stderr);
-                eprintln!(
+                pb.println(format!(
                     "{} Failed to clean {}: {}",
                     "✗".red(),
                     file.display(),
                     error
-                );
+                ));
             }
             Err(e) => {
-                eprintln!("{} Failed to clean {}: {}", "✗".red(), file.display(), e);
+                pb.println(format!("{} Failed to clean {}: {}", "✗".red(), file.display(), e));
             }
         }
+        pb.inc(1);
     }
+
+    pb.finish_with_message("Cleaning completed!");
 
     println!();
     println!("{} Cleaning completed!", "✓".green());
