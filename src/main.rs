@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use colored::*;
+use futures::future::join_all;
 
-use rayon::prelude::*;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use walkdir::WalkDir;
@@ -240,7 +240,8 @@ enum Commands {
     Formats,
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     print_banner();
 
     let cli = Cli::parse();
@@ -263,7 +264,8 @@ fn main() -> Result<()> {
                 quality,
                 codec.as_ref(),
                 *jobs,
-            )?;
+            )
+            .await?;
         }
         Commands::EnhanceAudio {
             input,
@@ -440,21 +442,23 @@ fn print_banner() {
     println!();
 }
 
-fn convert_files(
+async fn convert_files(
     input: &Path,
     format: &str,
     output_dir: Option<&PathBuf>,
     recursive: bool,
     quality: &str,
     codec: Option<&String>,
-    jobs: usize,
+    _jobs: usize, // jobs parameter is no longer directly used for rayon, but kept for compatibility
 ) -> Result<()> {
     check_ffmpeg()?;
 
     let output_dir = output_dir
         .map(|p| p.as_path())
         .unwrap_or_else(|| Path::new("."));
-    std::fs::create_dir_all(output_dir)?;
+    tokio::fs::create_dir_all(output_dir)
+        .await
+        .context("Failed to create output directory")?;
 
     let files = collect_files(input, recursive)?;
 
@@ -466,23 +470,36 @@ fn convert_files(
     println!("{} Found {} file(s) to convert", "✓".green(), files.len());
     println!();
 
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(jobs)
-        .build()
-        .context("Failed to create thread pool")?;
+    let mut tasks = Vec::new();
+    for file in files {
+        let output_dir_clone = output_dir.to_path_buf();
+        let format_clone = format.to_string();
+        let quality_clone = quality.to_string();
+        let codec_clone = codec.map(|s| s.to_string());
 
-    pool.install(|| {
-        files.par_iter().for_each(|file| {
-            match convert_file(file, format, output_dir, quality, codec) {
+        tasks.push(tokio::spawn(async move {
+            match convert_file(
+                &file,
+                &format_clone,
+                &output_dir_clone,
+                &quality_clone,
+                codec_clone.as_ref(),
+            )
+            .await
+            {
                 Ok(_) => {
                     println!("{} Converted: {}", "✓".green(), file.display());
+                    Ok(())
                 }
                 Err(e) => {
                     eprintln!("{} Failed to convert {}: {}", "✗".red(), file.display(), e);
+                    Err(e)
                 }
             }
-        });
-    });
+        }));
+    }
+
+    join_all(tasks).await;
 
     println!();
     println!("{} Conversion completed!", "✓".green());
@@ -490,7 +507,7 @@ fn convert_files(
     Ok(())
 }
 
-fn convert_file(
+async fn convert_file(
     input: &Path,
     format: &str,
     output_dir: &Path,
@@ -500,32 +517,31 @@ fn convert_file(
     let file_stem = input.file_stem().context("Invalid filename")?;
     let output_file = output_dir.join(format!("{}.{}", file_stem.to_string_lossy(), format));
 
-    let mut cmd = Command::new("ffmpeg");
-    cmd.arg("-i")
-        .arg(input)
-        .arg("-y")
-        .arg("-loglevel")
-        .arg("error");
+    let mut args = vec![
+        "-i".to_string(),
+        input.to_string_lossy().to_string(),
+        "-y".to_string(),
+        "-loglevel".to_string(),
+        "error".to_string(),
+    ];
 
     if is_audio_format(format) {
-        cmd.arg("-b:a").arg(quality);
+        args.push("-b:a".to_string());
+        args.push(quality.to_string());
     } else {
         if let Some(c) = codec {
-            cmd.arg("-c:v").arg(c);
+            args.push("-c:v".to_string());
+            args.push(c.to_string());
         }
-        cmd.arg("-b:a").arg(quality);
+        args.push("-b:a".to_string());
+        args.push(quality.to_string());
     }
 
-    cmd.arg(&output_file)
-        .stdout(Stdio::null())
-        .stderr(Stdio::piped());
+    args.push(output_file.to_string_lossy().to_string());
 
-    let output = cmd.output().context("Failed to execute ffmpeg")?;
-
-    if !output.status.success() {
-        let error = String::from_utf8_lossy(&output.stderr);
-        anyhow::bail!("FFmpeg error: {}", error);
-    }
+    ffmpeg::execute_ffmpeg_async(args)
+        .await
+        .context("Failed to execute ffmpeg asynchronously")?;
 
     Ok(())
 }

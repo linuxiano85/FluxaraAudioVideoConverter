@@ -97,6 +97,14 @@ pub fn build_complex_filtergraph(
     (vf, af)
 }
 
+#[derive(Debug, Clone)]
+pub struct DeviceCaps {
+    pub width: u32,
+    pub height: u32,
+    pub fps: u32,
+    pub formats: Vec<String>,
+}
+
 /// Probe device capabilities (stub for now - would need v4l2-ctl integration)
 pub fn probe_device_caps(_device: &str) -> Result<DeviceCaps> {
     // For now, return default capabilities
@@ -107,12 +115,4 @@ pub fn probe_device_caps(_device: &str) -> Result<DeviceCaps> {
         fps: 30,
         formats: vec!["yuyv422".to_string()],
     })
-}
-
-#[derive(Debug, Clone)]
-pub struct DeviceCaps {
-    pub width: u32,
-    pub height: u32,
-    pub fps: u32,
-    pub formats: Vec<String>,
 }
