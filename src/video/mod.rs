@@ -144,7 +144,7 @@ pub fn vhs_rescue(input: &Path, output: &Path, notch_freq: Option<u32>) -> Resul
         notch_freq,
         compressor: true,
         gate: true,
-        gate_threshold: -50.0,
+        gate_threshold: Some(-50.0),
     };
 
     let vf = build_video_filters(&video_opts).join(",");

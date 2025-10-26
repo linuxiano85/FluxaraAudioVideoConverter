@@ -12,7 +12,7 @@ pub struct AudioEnhanceOptions {
     pub notch_freq: Option<u32>, // 50 or 60 Hz hum removal
     pub compressor: bool,
     pub gate: bool,
-    pub gate_threshold: f32,
+    pub gate_threshold: Option<f32>,
 }
 
 impl Default for AudioEnhanceOptions {
@@ -25,7 +25,7 @@ impl Default for AudioEnhanceOptions {
             notch_freq: None, // User must specify 50 or 60
             compressor: true,
             gate: true,
-            gate_threshold: -50.0,
+            gate_threshold: Some(-50.0),
         }
     }
 }
@@ -58,7 +58,7 @@ pub fn build_audio_filters(opts: &AudioEnhanceOptions) -> Vec<String> {
     if opts.gate {
         filters.push(format!(
             "agate=threshold={}dB:ratio=3:attack=20:release=250",
-            opts.gate_threshold
+            opts.gate_threshold.unwrap_or(-50.0)
         ));
     }
 

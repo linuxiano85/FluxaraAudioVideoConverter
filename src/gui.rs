@@ -177,10 +177,10 @@ enum Message {
 }
 
 impl Application for App {
-    type Message = Message;
-    type Theme = Theme;
     type Executor = iced::executor::Default;
+    type Message = Message;
     type Flags = ();
+    type Theme = Theme;
 
     fn new(_flags: ()) -> (Self, Command<Message>) {
         (
@@ -415,7 +415,7 @@ impl Application for App {
                     notch_freq,
                     compressor: self.enhance_audio_compressor,
                     gate: self.enhance_audio_gate,
-                    gate_threshold: -50.0,
+                    gate_threshold: Some(-50.0),
                 };
 
                 let audio_only_clone = self.enhance_audio_only;
@@ -829,7 +829,7 @@ impl Application for App {
                 let recursive_clone = self.clean_recursive;
 
                 Command::perform(
-                    async move { clean_files(&input_path, metadata_clone, optimize_clone, recursive_clone) },
+                    async move { clean_files(&input_path, metadata_clone, optimize_clone, recursive_clone).await },
                     |result| {
                         match result {
                             Ok(_) => {
@@ -870,7 +870,7 @@ impl Application for App {
                 println!("Info button pressed!");
                 let input_path = PathBuf::from(&self.info_input);
                 Command::perform(
-                    async move { show_info(&input_path) },
+                    async move { show_info(&input_path).await },
                     |result| {
                         match result {
                             Ok(_) => {
@@ -908,7 +908,7 @@ impl Application for App {
                 Command::perform(
                     async move {
                         list_formats();
-                        Ok(())
+                        Ok::<(), anyhow::Error>(())
                     },
                     |result: Result<()>| {
                         match result {
@@ -925,14 +925,6 @@ impl Application for App {
                 )
             }
         }
-    }
-
-    fn subscription(&self) -> Subscription<Message> {
-        Subscription::none()
-    }
-
-    fn theme(&self) -> Theme {
-        Theme::Dark
     }
 
     fn view(&self) -> Element<'_, Message> {
@@ -1028,6 +1020,14 @@ impl Application for App {
             .spacing(20)
             .align_items(Alignment::Start)
             .into()
+    }
+
+    fn theme(&self) -> Theme {
+        Theme::Dark
+    }
+
+    fn subscription(&self) -> Subscription<Message> {
+        Subscription::none()
     }
 }
 

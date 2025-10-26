@@ -11,7 +11,8 @@ mod audio;
 mod capture;
 mod ffmpeg;
 mod video;
-mod gui; // Add this line
+mod gui;
+mod i18n;
 
 #[derive(Parser)]
 #[command(name = "Fluxara AVC")]
@@ -91,6 +92,10 @@ enum Commands {
         /// Enable noise gate
         #[arg(long, default_value = "true")]
         gate: bool,
+
+        /// Noise gate threshold (e.g., -60.0)
+        #[arg(long)]
+        gate_threshold: Option<f32>,
 
         /// Process audio only (no video stream)
         #[arg(long)]
@@ -282,6 +287,7 @@ fn main() -> Result<()> {
             audio_only,
             compressor,
             gate,
+            gate_threshold,
         } => {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(async {
@@ -293,7 +299,7 @@ fn main() -> Result<()> {
                     notch_freq: *notch,
                     compressor: *compressor,
                     gate: *gate,
-                    gate_threshold: -50.0,
+                    gate_threshold: *gate_threshold,
                 };
                 println!("{} Enhancing audio...", "✓".green());
                 if *audio_only {
@@ -384,7 +390,7 @@ fn main() -> Result<()> {
                         eprintln!("  {} {}", "✗".red(), e);
                     }
                 }
-                Ok(())
+                Ok::<(), anyhow::Error>(())
             })?;
         }
         Commands::Capture {
@@ -443,20 +449,20 @@ fn main() -> Result<()> {
         } => {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(async {
-                clean_files(input, *metadata, *optimize, *recursive)
+                clean_files(input, *metadata, *optimize, *recursive).await
             })?;
         }
         Commands::Info { input } => {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(async {
-                show_info(input)
+                show_info(input).await
             })?;
         }
         Commands::Formats => {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(async {
                 list_formats();
-                Ok(())
+                Ok::<(), anyhow::Error>(())
             })?;
         }
         Commands::Gui => {
@@ -464,7 +470,6 @@ fn main() -> Result<()> {
             gui::run().context("Failed to launch GUI")?;
         }
     }
-
     Ok(())
 }
 
@@ -602,7 +607,7 @@ async fn convert_file(
     Ok(())
 }
 
-fn clean_files(input: &Path, remove_metadata: bool, optimize: bool, recursive: bool) -> Result<()> {
+async fn clean_files(input: &Path, remove_metadata: bool, optimize: bool, recursive: bool) -> Result<()> {
     check_ffmpeg()?;
 
     let files = collect_files(input, recursive)?;
@@ -679,7 +684,7 @@ fn clean_files(input: &Path, remove_metadata: bool, optimize: bool, recursive: b
     Ok(())
 }
 
-fn show_info(input: &Path) -> Result<()> {
+async fn show_info(input: &Path) -> Result<()> {
     println!("{} File: {}", "ℹ".bright_blue(), input.display());
     println!();
 
