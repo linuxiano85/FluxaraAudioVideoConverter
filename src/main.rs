@@ -91,10 +91,6 @@ enum Commands {
         /// Enable noise gate
         #[arg(long, default_value = "true")]
         gate: bool,
-
-        /// Process audio only (no video stream)
-        #[arg(long)]
-        audio_only: bool,
     },
     /// Enhance video with deinterlace, stabilization, denoise, and sharpening
     EnhanceVideo {
@@ -287,11 +283,7 @@ fn main() -> Result<()> {
                 gate_threshold: -50.0,
             };
             println!("{} Enhancing audio...", "✓".green());
-            if *audio_only {
-                audio::enhance_audio_only(input, output, &opts)?;
-            } else {
-                audio::enhance_audio(input, output, &opts)?;
-            }
+            audio::enhance_audio(input, output, &opts)?;
             println!("{} Audio enhancement completed!", "✓".green());
         }
         Commands::EnhanceVideo {
