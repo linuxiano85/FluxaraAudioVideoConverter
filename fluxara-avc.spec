@@ -4,7 +4,7 @@ Release:        1%{?dist}
 Summary:        Linux-first analog restoration & conversion with FFmpeg
 
 License:        MIT
-URL:            https://github.com/linuxiano85/NovaAudioVideoConverter
+URL:            https://github.com/linuxiano85/FluxaraAudioVideoConverter
 Source0:        %{name}-%{version}.tar.gz
 
 BuildRequires:  cargo

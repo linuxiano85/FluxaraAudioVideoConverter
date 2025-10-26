@@ -298,4 +298,4 @@ Planned features:
 ## Support
 
 For issues, feature requests, or contributions, please visit:
-https://github.com/linuxiano85/NovaAudioVideoConverter
+https://github.com/linuxiano85/FluxaraAudioVideoConverter
