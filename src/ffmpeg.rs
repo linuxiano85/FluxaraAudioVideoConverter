@@ -73,6 +73,7 @@ pub fn get_media_info(input: &Path) -> Result<serde_json::Value> {
 }
 
 /// Build a filtergraph string from multiple filters
+#[allow(dead_code)]
 pub fn build_filtergraph(filters: &[&str]) -> String {
     filters.join(",")
 }
