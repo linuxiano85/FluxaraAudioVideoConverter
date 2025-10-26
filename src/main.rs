@@ -242,8 +242,7 @@ enum Commands {
     Gui,
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     print_banner();
 
     let cli = Cli::parse();
@@ -258,16 +257,19 @@ async fn main() -> Result<()> {
             codec,
             jobs,
         } => {
-            convert_files(
-                input,
-                format,
-                output.as_ref(),
-                *recursive,
-                quality,
-                codec.as_ref(),
-                *jobs,
-            )
-            .await?;
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                convert_files(
+                    input,
+                    format,
+                    output.as_ref(),
+                    *recursive,
+                    quality,
+                    codec.as_ref(),
+                    *jobs,
+                )
+                .await
+            })?;
         }
         Commands::EnhanceAudio {
             input,
@@ -281,22 +283,25 @@ async fn main() -> Result<()> {
             compressor,
             gate,
         } => {
-            let opts = audio::AudioEnhanceOptions {
-                denoise: *denoise,
-                normalize: *normalize,
-                highpass_freq: Some(*highpass),
-                lowpass_freq: *lowpass,
-                notch_freq: *notch,
-                compressor: *compressor,
-                gate: *gate,
-                gate_threshold: -50.0,
-            };
-            println!("{} Enhancing audio...", "✓".green());
-            if *audio_only {
-                audio::enhance_audio_only(input, output, &opts)?;
-            } else {
-                audio::enhance_audio(input, output, &opts)?;
-            }
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                let opts = audio::AudioEnhanceOptions {
+                    denoise: *denoise,
+                    normalize: *normalize,
+                    highpass_freq: Some(*highpass),
+                    lowpass_freq: *lowpass,
+                    notch_freq: *notch,
+                    compressor: *compressor,
+                    gate: *gate,
+                    gate_threshold: -50.0,
+                };
+                println!("{} Enhancing audio...", "✓".green());
+                if *audio_only {
+                    audio::enhance_audio_only(input, output, &opts)
+                } else {
+                    audio::enhance_audio(input, output, &opts)
+                }
+            })?;
             println!("{} Audio enhancement completed!", "✓".green());
         }
         Commands::EnhanceVideo {
@@ -311,23 +316,26 @@ async fn main() -> Result<()> {
             height,
             aspect,
         } => {
-            let denoise_type = match denoise.as_str() {
-                "none" => video::DenoiseType::None,
-                "nlmeans" => video::DenoiseType::Nlmeans,
-                _ => video::DenoiseType::Hqdn3d,
-            };
-            let opts = video::VideoEnhanceOptions {
-                deinterlace: *deinterlace,
-                stabilize: *stabilize,
-                denoise: denoise_type,
-                sharpen: *sharpen,
-                color_adjust: *color,
-                scale_width: *width,
-                scale_height: *height,
-                aspect_ratio: aspect.clone(),
-            };
-            println!("{} Enhancing video...", "✓".green());
-            video::enhance_video(input, output, &opts)?;
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                let denoise_type = match denoise.as_str() {
+                    "none" => video::DenoiseType::None,
+                    "nlmeans" => video::DenoiseType::Nlmeans,
+                    _ => video::DenoiseType::Hqdn3d,
+                };
+                let opts = video::VideoEnhanceOptions {
+                    deinterlace: *deinterlace,
+                    stabilize: *stabilize,
+                    denoise: denoise_type,
+                    sharpen: *sharpen,
+                    color_adjust: *color,
+                    scale_width: *width,
+                    scale_height: *height,
+                    aspect_ratio: aspect.clone(),
+                };
+                println!("{} Enhancing video...", "✓".green());
+                video::enhance_video(input, output, &opts)
+            })?;
             println!("{} Video enhancement completed!", "✓".green());
         }
         Commands::VhsRescue {
@@ -335,42 +343,49 @@ async fn main() -> Result<()> {
             output,
             notch,
         } => {
-            println!("{} Starting VHS Rescue...", "🎬".bright_cyan());
-            video::vhs_rescue(input, output, *notch)?;
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                println!("{} Starting VHS Rescue...", "🎬".bright_cyan());
+                video::vhs_rescue(input, output, *notch)
+            })?;
             println!("{} VHS Rescue completed!", "✓".green());
         }
         Commands::CaptureList => {
-            println!("{} Available V4L2 Video Devices:", "📹".bright_cyan());
-            match capture::list_video_devices() {
-                Ok(devices) => {
-                    if devices.is_empty() {
-                        println!("  {}", "No video devices found".yellow());
-                    } else {
-                        for dev in devices {
-                            println!("  • {}", dev.green());
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                println!("{} Available V4L2 Video Devices:", "📹".bright_cyan());
+                match capture::list_video_devices() {
+                    Ok(devices) => {
+                        if devices.is_empty() {
+                            println!("  {}", "No video devices found".yellow());
+                        } else {
+                            for dev in devices {
+                                println!("  • {}", dev.green());
+                            }
                         }
                     }
-                }
-                Err(e) => {
-                    eprintln!("  {} {}", "✗".red(), e);
-                }
-            }
-            println!();
-            println!("{} Available ALSA Audio Devices:", "🎤".bright_cyan());
-            match capture::list_audio_devices() {
-                Ok(devices) => {
-                    if devices.is_empty() {
-                        println!("  {}", "No audio devices found".yellow());
-                    } else {
-                        for dev in devices {
-                            println!("  • {}", dev.green());
-                        }
+                    Err(e) => {
+                        eprintln!("  {} {}", "✗".red(), e);
                     }
                 }
-                Err(e) => {
-                    eprintln!("  {} {}", "✗".red(), e);
+                println!();
+                println!("{} Available ALSA Audio Devices:", "🎤".bright_cyan());
+                match capture::list_audio_devices() {
+                    Ok(devices) => {
+                        if devices.is_empty() {
+                            println!("  {}", "No audio devices found".yellow());
+                        } else {
+                            for dev in devices {
+                                println!("  • {}", dev.green());
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("  {} {}", "✗".red(), e);
+                    }
                 }
-            }
+                Ok(())
+            })?;
         }
         Commands::Capture {
             output,
@@ -388,33 +403,36 @@ async fn main() -> Result<()> {
             abitrate,
             archival,
         } => {
-            let capture_format = match format.as_str() {
-                "mkv" => capture::CaptureFormat::Mkv,
-                _ => capture::CaptureFormat::Mp4,
-            };
-            let opts = capture::CaptureOptions {
-                format: capture_format,
-                video_device: video_device.clone(),
-                audio_device: audio_device.clone(),
-                deinterlace: *deinterlace,
-                stabilize: *stabilize,
-                denoise: denoise.clone(),
-                video_bitrate: vbitrate.clone(),
-                crf: *crf,
-                width: *width,
-                height: *height,
-                fps: *fps,
-                audio_bitrate: abitrate.clone(),
-                archival_mode: *archival,
-            };
-            println!(
-                "{} Starting capture from {} and {}...",
-                "📹".bright_cyan(),
-                video_device,
-                audio_device
-            );
-            println!("{}", "Press Ctrl+C to stop recording".yellow());
-            capture::capture(output, &opts)?;
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                let capture_format = match format.as_str() {
+                    "mkv" => capture::CaptureFormat::Mkv,
+                    _ => capture::CaptureFormat::Mp4,
+                };
+                let opts = capture::CaptureOptions {
+                    format: capture_format,
+                    video_device: video_device.clone(),
+                    audio_device: audio_device.clone(),
+                    deinterlace: *deinterlace,
+                    stabilize: *stabilize,
+                    denoise: denoise.clone(),
+                    video_bitrate: vbitrate.clone(),
+                    crf: *crf,
+                    width: *width,
+                    height: *height,
+                    fps: *fps,
+                    audio_bitrate: abitrate.clone(),
+                    archival_mode: *archival,
+                };
+                println!(
+                    "{} Starting capture from {} and {}...",
+                    "📹".bright_cyan(),
+                    video_device,
+                    audio_device
+                );
+                println!("{}", "Press Ctrl+C to stop recording".yellow());
+                capture::capture(output, &opts)
+            })?;
             println!("{} Capture completed!", "✓".green());
         }
         Commands::Clean {
@@ -423,13 +441,23 @@ async fn main() -> Result<()> {
             optimize,
             recursive,
         } => {
-            clean_files(input, *metadata, *optimize, *recursive)?;
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                clean_files(input, *metadata, *optimize, *recursive)
+            })?;
         }
         Commands::Info { input } => {
-            show_info(input)?;
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                show_info(input)
+            })?;
         }
         Commands::Formats => {
-            list_formats();
+            let rt = tokio::runtime::Runtime::new()?;
+            rt.block_on(async {
+                list_formats();
+                Ok(())
+            })?;
         }
         Commands::Gui => {
             println!("{} Launching GUI...", "🚀".bright_magenta());
