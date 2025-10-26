@@ -98,7 +98,7 @@ pub fn build_complex_filtergraph(
 }
 
 /// Probe device capabilities (stub for now - would need v4l2-ctl integration)
-pub fn probe_device_caps(device: &str) -> Result<DeviceCaps> {
+pub fn probe_device_caps(_device: &str) -> Result<DeviceCaps> {
     // For now, return default capabilities
     // In a full implementation, this would call v4l2-ctl or parse ffmpeg output
     Ok(DeviceCaps {

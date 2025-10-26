@@ -464,6 +464,19 @@ This project is licensed under the MIT License. See [LICENSE](LICENSE) for detai
 ## 🔗 Links
 
 - **Documentation**: [docs/](docs/)
+
+## 🔐 SSH (offline)
+
+If you need to work offline with SSH keys and a local SSH CA, see `docs/SSH.md` for scripts and examples. Quick start:
+
+```bash
+make ssh-tools
+./scripts/generate_ssh_key.fish           # generate a key (interactive)
+./scripts/create_ssh_ca.sh init ~/.local/share/ssh_ca
+```
+
+Do not commit private keys or the CA private key to the repository.
+
 - **Brand Identity**: [docs/brand/IDENTITY.md](docs/brand/IDENTITY.md)
 - **Name Decision**: [docs/brand/NAME-DECISION.md](docs/brand/NAME-DECISION.md)
 - **GUI Concept**: [docs/ui/GUI-concept.md](docs/ui/GUI-concept.md)

@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Small installer to make scripts executable and show next steps for offline SSH tooling
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+
+echo "Making scripts executable..."
+chmod +x "$ROOT_DIR/scripts"/* || true
+
+echo "Done. Useful next steps:"
+echo "  1) Run the generate script to create a key:" 
+echo "     ./scripts/generate_ssh_key.fish"
+echo "  2) (Optional) Initialize a CA:" 
+echo "     ./scripts/create_ssh_ca.sh init ~/.local/share/ssh_ca"
+echo "  3) To sign a key:" 
+echo "     ./scripts/create_ssh_ca.sh sign ~/.local/share/ssh_ca ~/.ssh/id_ed25519.pub \"username\" +52w"
+
+exit 0
