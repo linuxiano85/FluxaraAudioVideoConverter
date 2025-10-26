@@ -449,7 +449,7 @@ fn print_banner() {
     println!();
 }
 
-async fn convert_files(
+pub async fn convert_files(
     input: &Path,
     format: &str,
     output_dir: Option<&PathBuf>,
