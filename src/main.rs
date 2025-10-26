@@ -491,6 +491,20 @@ fn convert_file(
     let file_stem = input.file_stem().context("Invalid filename")?;
     let output_file = output_dir.join(format!("{}.{}", file_stem.to_string_lossy(), format));
 
+    if output_file.exists() {
+        println!(
+            "{} Output file {} already exists. Overwrite? (y/n)",
+            "?".yellow(),
+            output_file.display()
+        );
+        let mut user_input = String::new();
+        std::io::stdin().read_line(&mut user_input)?;
+        if user_input.trim().to_lowercase() != "y" {
+            println!("{} Skipping {}", "✓".green(), input.display());
+            return Ok(());
+        }
+    }
+
     let mut cmd = Command::new("ffmpeg");
     cmd.arg("-i")
         .arg(input)
@@ -535,9 +549,24 @@ fn clean_files(input: &Path, remove_metadata: bool, optimize: bool, recursive: b
 
     for file in &files {
         let output_file = file.with_extension(format!(
-            "cleaned.{}",
+            "{}_cleaned.{}",
+            file.file_stem().unwrap_or_default().to_string_lossy(),
             file.extension().unwrap_or_default().to_string_lossy()
         ));
+
+        if output_file.exists() {
+            println!(
+                "{} Output file {} already exists. Overwrite? (y/n)",
+                "?".yellow(),
+                output_file.display()
+            );
+            let mut user_input = String::new();
+            std::io::stdin().read_line(&mut user_input)?;
+            if user_input.trim().to_lowercase() != "y" {
+                println!("{} Skipping {}", "✓".green(), file.display());
+                continue;
+            }
+        }
 
         let mut cmd = Command::new("ffmpeg");
         cmd.arg("-i")
@@ -561,8 +590,6 @@ fn clean_files(input: &Path, remove_metadata: bool, optimize: bool, recursive: b
         match cmd.output() {
             Ok(output) if output.status.success() => {
                 println!("{} Cleaned: {}", "✓".green(), file.display());
-                std::fs::remove_file(file)?;
-                std::fs::rename(&output_file, file)?;
             }
             Ok(output) => {
                 let error = String::from_utf8_lossy(&output.stderr);
