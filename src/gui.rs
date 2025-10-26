@@ -92,6 +92,21 @@ struct App {
     info_input: String,
 }
 
+// Helper function to generate a default output path
+fn generate_default_output_path(input_path_str: &str, suffix: &str) -> String {
+    let input_path = PathBuf::from(input_path_str);
+    if let Some(parent) = input_path.parent() {
+        if let Some(stem) = input_path.file_stem() {
+            if let Some(extension) = input_path.extension() {
+                let new_filename = format!("{}_{}.{}", stem.to_string_lossy(), suffix, extension.to_string_lossy());
+                return parent.join(new_filename).to_string_lossy().into_owned();
+            }
+        }
+    }
+    // Fallback if path manipulation fails
+    format!("{}_output", input_path_str)
+}
+
 #[derive(Debug, Clone)]
 enum Message {
     PageChanged(Page),
@@ -402,7 +417,12 @@ impl Application for App {
             Message::EnhanceAudioButtonPressed => {
                 println!("Enhance Audio button pressed!");
                 let input_path = PathBuf::from(&self.enhance_audio_input);
-                let output_path = PathBuf::from(&self.enhance_audio_output);
+                let output_path_str = if self.enhance_audio_output.is_empty() {
+                    generate_default_output_path(&self.enhance_audio_input, "enhanced_audio")
+                } else {
+                    self.enhance_audio_output.clone()
+                };
+                let output_path = PathBuf::from(&output_path_str);
                 let highpass_freq = self.enhance_audio_highpass.parse::<u32>().ok();
                 let lowpass_freq = self.enhance_audio_lowpass.parse::<u32>().ok();
                 let notch_freq = self.enhance_audio_notch.parse::<u32>().ok();
@@ -521,7 +541,12 @@ impl Application for App {
             Message::EnhanceVideoButtonPressed => {
                 println!("Enhance Video button pressed!");
                 let input_path = PathBuf::from(&self.enhance_video_input);
-                let output_path = PathBuf::from(&self.enhance_video_output);
+                let output_path_str = if self.enhance_video_output.is_empty() {
+                    generate_default_output_path(&self.enhance_video_input, "enhanced_video")
+                } else {
+                    self.enhance_video_output.clone()
+                };
+                let output_path = PathBuf::from(&output_path_str);
                 let width = self.enhance_video_width.parse::<u32>().ok();
                 let height = self.enhance_video_height.parse::<u32>().ok();
                 let aspect_ratio = if self.enhance_video_aspect.is_empty() {
