@@ -1,34 +1,55 @@
 #![allow(unused_imports)]
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fs;
-use std::fmt;
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
-#[allow(dead_code)]
-pub enum Locale {
-    #[default]
+use std::{collections::HashMap, fmt, fs, sync::RwLock};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum Language {
     En,
     It,
 }
 
-#[allow(dead_code)]
-impl Locale {
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Locale::En => "en",
-            Locale::It => "it",
-        }
-    }
-
-    pub fn all() -> &'static [Locale] {
-        &[Locale::En, Locale::It]
+impl Default for Language {
+    fn default() -> Self {
+        Language::En
     }
 }
 
-impl fmt::Display for Locale {
+#[allow(dead_code)]
+impl Language {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Language::En => "en",
+            Language::It => "it",
+        }
+    }
+
+    pub fn all() -> &'static [Language] {
+        &[Language::En, Language::It]
+    }
+}
+
+impl fmt::Display for Language {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_str())
     }
+}
+
+static CURRENT_LANGUAGE: Lazy<RwLock<Language>> = Lazy::new(|| RwLock::new(Language::En));
+static TRANSLATIONS: Lazy<RwLock<Translations>> = Lazy::new(|| {
+    let lang = *CURRENT_LANGUAGE.read().unwrap();
+    let translations = Translations::load(lang).unwrap_or_default();
+    RwLock::new(translations)
+});
+
+pub fn set_language(lang: Language) {
+    *CURRENT_LANGUAGE.write().unwrap() = lang;
+    let new_translations = Translations::load(lang).unwrap_or_default();
+    *TRANSLATIONS.write().unwrap() = new_translations;
+}
+
+pub fn translate(key: &str) -> String {
+    TRANSLATIONS.read().unwrap().get(key)
 }
 
 #[derive(Debug, Default, Deserialize)]
@@ -40,8 +61,8 @@ pub struct Translations {
 
 #[allow(dead_code)]
 impl Translations {
-    pub fn load(locale: Locale) -> anyhow::Result<Self> {
-        let path = format!("./locales/{}.json", locale.as_str());
+    pub fn load(language: Language) -> anyhow::Result<Self> {
+        let path = format!("./locales/{}.json", language.as_str());
         let content = fs::read_to_string(path)?;
         let translations: Translations = serde_json::from_str(&content)?;
         Ok(translations)

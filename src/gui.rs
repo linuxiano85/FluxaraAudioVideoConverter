@@ -1,11 +1,11 @@
 use iced::{
-    widget::{button, column, row, text, Space, text_input, checkbox, Column},
-    theme, Alignment, Element, Length, Application, Settings, Theme, Color,
-    Command, Subscription,
+    widget::{self, button, column, row, text, Space, ProgressBar}, // Aggiunto 'self' per risolvere 'widget'
+    Alignment, Element, Length, Application, Settings, Theme, Color,
+    Command, Subscription, Renderer,
 };
 use std::fmt;
 use std::path::PathBuf;
-use crate::convert_files;
+use std::sync::Arc; // Importa Arc
 use anyhow::Result;
 use crate::audio::{self, AudioEnhanceOptions};
 use crate::video::{self, VideoEnhanceOptions, DenoiseType};
@@ -13,13 +13,21 @@ use crate::capture::{self, CaptureFormat, CaptureOptions};
 use crate::clean_files;
 use crate::show_info;
 use crate::list_formats;
-use rfd::AsyncFileDialog;
+use rfd::AsyncFileDialog; // Aggiunto l'import per AsyncFileDialog
+use crate::i18n::{self, Language, translate};
 
+mod pages; // Declare the pages module
+mod theme; // Declare the theme module
+use theme::AppTheme; // Import AppTheme from the new module
+use pages::convert::{ConvertPageMessage, ConvertPageState}; // Import ConvertPageMessage and ConvertPageState
 
+/// Punto di ingresso principale per l'applicazione GUI.
+/// Avvia l'applicazione Iced.
 pub fn run() -> iced::Result {
     App::run(Settings::default())
 }
 
+/// Enum che rappresenta le diverse pagine dell'applicazione.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Page {
     Home,
@@ -31,6 +39,7 @@ enum Page {
     Clean,
     Info,
     Formats,
+    Settings,
 }
 
 impl fmt::Display for Page {
@@ -39,15 +48,10 @@ impl fmt::Display for Page {
     }
 }
 
+/// Struttura principale dell'applicazione che contiene lo stato di tutte le pagine.
 struct App {
     current_page: Page,
-    convert_input_path: String,
-    convert_output_format: String,
-    convert_output_dir: String,
-    convert_recursive: bool,
-    convert_quality: String,
-    convert_codec: String,
-    convert_jobs: String,
+    convert_page_state: ConvertPageState, // Stato della pagina di conversione
     enhance_audio_input: String,
     enhance_audio_output: String,
     enhance_audio_denoise: bool,
@@ -57,7 +61,10 @@ struct App {
     enhance_audio_notch: String,
     enhance_audio_compressor: bool,
     enhance_audio_gate: bool,
+    enhance_audio_gate_threshold: String, // Nuovo campo per la soglia del gate
     enhance_audio_only: bool,
+    video_devices: Arc<Vec<String>>, // Lista dei dispositivi video disponibili
+    audio_devices: Arc<Vec<String>>, // Lista dei dispositivi audio disponibili
     enhance_video_input: String,
     enhance_video_output: String,
     enhance_video_deinterlace: bool,
@@ -90,9 +97,17 @@ struct App {
     clean_optimize: bool,
     clean_recursive: bool,
     info_input: String,
+    status_message: String,
+    error_message: Option<String>, // Nuovo campo per i messaggi di errore
+    conversion_progress: f32,
+    is_converting: bool,
+    current_theme: AppTheme,
+    current_language: Language,
 }
 
-// Helper function to generate a default output path
+/// Funzione di utilità per generare un percorso di output predefinito.
+/// Prende un percorso di input e un suffisso, e crea un nuovo nome di file
+/// aggiungendo il suffisso prima dell'estensione.
 fn generate_default_output_path(input_path_str: &str, suffix: &str) -> String {
     let input_path = PathBuf::from(input_path_str);
     if let Some(parent) = input_path.parent() {
@@ -103,25 +118,16 @@ fn generate_default_output_path(input_path_str: &str, suffix: &str) -> String {
             }
         }
     }
-    // Fallback if path manipulation fails
+    // Fallback se la manipolazione del percorso fallisce
     format!("{}_output", input_path_str)
 }
 
+/// Enum che definisce tutti i messaggi che l'applicazione può elaborare.
+/// Questi messaggi vengono inviati all'applicazione per aggiornare il suo stato.
 #[derive(Debug, Clone)]
-enum Message {
+pub enum Message {
     PageChanged(Page),
-    ConvertInputPathChanged(String),
-    ConvertOutputFormatChanged(String),
-    ConvertOutputDirChanged(String),
-    ConvertRecursiveToggled(bool),
-    ConvertQualityChanged(String),
-    ConvertCodecChanged(String),
-    ConvertJobsChanged(String),
-    ConvertButtonPressed,
-    ConvertBrowseInput,
-    ConvertBrowseOutput,
-    ConvertInputFileSelected(Option<PathBuf>),
-    ConvertOutputDirectorySelected(Option<PathBuf>),
+    ConvertPage(ConvertPageMessage), // Messaggi specifici per la pagina di conversione
     EnhanceAudioInputChanged(String),
     EnhanceAudioOutputChanged(String),
     EnhanceAudioDenoiseToggled(bool),
@@ -131,6 +137,7 @@ enum Message {
     EnhanceAudioNotchChanged(String),
     EnhanceAudioCompressorToggled(bool),
     EnhanceAudioGateToggled(bool),
+    EnhanceAudioGateThresholdChanged(String), // Nuovo messaggio per la soglia del gate
     EnhanceAudioOnlyToggled(bool),
     EnhanceAudioButtonPressed,
     EnhanceAudioBrowseInput,
@@ -177,6 +184,8 @@ enum Message {
     CaptureButtonPressed,
     CaptureBrowseOutput,
     CaptureOutputFileSelected(Option<PathBuf>),
+    VideoDevicesLoaded(Vec<String>), // Messaggio per caricare i dispositivi video
+    AudioDevicesLoaded(Vec<String>), // Messaggio per caricare i dispositivi audio
     CleanInputChanged(String),
     CleanMetadataToggled(bool),
     CleanOptimizeToggled(bool),
@@ -189,6 +198,12 @@ enum Message {
     InfoBrowseInput,
     InfoInputFileSelected(Option<PathBuf>),
     FormatsButtonPressed,
+    ConversionStarted,
+    ConversionProgressed(f32),
+    ConversionCompleted(Result<(), String>),
+    UpdateStatus(String),
+    ThemeChanged(AppTheme),
+    LanguageChanged(Language),
 }
 
 impl Application for App {
@@ -197,19 +212,17 @@ impl Application for App {
     type Flags = ();
     type Theme = Theme;
 
+    /// Inizializza lo stato dell'applicazione.
     fn new(_flags: ()) -> (Self, Command<Message>) {
         (
             App {
                 current_page: Page::Home,
-                convert_input_path: String::new(),
-                convert_output_format: "mp4".to_string(),
-                convert_output_dir: String::new(),
-                convert_recursive: false,
-                convert_quality: "192k".to_string(),
-                convert_codec: String::new(),
-                convert_jobs: "4".to_string(),
+                convert_page_state: ConvertPageState::default(), // Inizializza lo stato della pagina di conversione
                 enhance_audio_input: String::new(),
+                error_message: None, // Inizializza il messaggio di errore a None
                 enhance_audio_output: String::new(),
+                video_devices: Arc::new(Vec::new()), // Inizializza liste vuote
+                audio_devices: Arc::new(Vec::new()), // Inizializza liste vuote
                 enhance_audio_denoise: true,
                 enhance_audio_normalize: true,
                 enhance_audio_highpass: "80".to_string(),
@@ -217,6 +230,7 @@ impl Application for App {
                 enhance_audio_notch: String::new(),
                 enhance_audio_compressor: true,
                 enhance_audio_gate: true,
+                enhance_audio_gate_threshold: "-50.0".to_string(), // Valore predefinito
                 enhance_audio_only: false,
                 enhance_video_input: String::new(),
                 enhance_video_output: String::new(),
@@ -250,130 +264,34 @@ impl Application for App {
                 clean_optimize: false,
                 clean_recursive: false,
                 info_input: String::new(),
+                status_message: "Ready".to_string(),
+                conversion_progress: 0.0,
+                is_converting: false,
+                current_theme: AppTheme::Dark,
+                current_language: i18n::Language::En,
             },
-            Command::none(),
+            Command::batch(vec![
+                Command::perform(async { crate::capture::list_video_devices().unwrap_or_default() }, Message::VideoDevicesLoaded),
+                Command::perform(async { crate::capture::list_audio_devices().unwrap_or_default() }, Message::AudioDevicesLoaded),
+            ]),
         )
     }
 
+    /// Restituisce il titolo della finestra dell'applicazione.
     fn title(&self) -> String {
-        format!("Fluxara AVC - {}", self.current_page)
+        translate(&format!("title_{:?}", self.current_page))
     }
 
+    /// Aggiorna lo stato dell'applicazione in base al messaggio ricevuto.
     fn update(&mut self, message: Message) -> Command<Message> {
         match message {
             Message::PageChanged(page) => {
                 self.current_page = page;
                 Command::none()
             },
-            Message::ConvertInputPathChanged(path) => {
-                self.convert_input_path = path;
-                Command::none()
+            Message::ConvertPage(convert_msg) => {
+                pages::convert::update(&mut self.convert_page_state, convert_msg)
             },
-            Message::ConvertOutputFormatChanged(format) => {
-                self.convert_output_format = format;
-                Command::none()
-            },
-            Message::ConvertOutputDirChanged(dir) => {
-                self.convert_output_dir = dir;
-                Command::none()
-            },
-            Message::ConvertRecursiveToggled(toggle) => {
-                self.convert_recursive = toggle;
-                Command::none()
-            },
-            Message::ConvertQualityChanged(quality) => {
-                self.convert_quality = quality;
-                Command::none()
-            },
-            Message::ConvertCodecChanged(codec) => {
-                self.convert_codec = codec;
-                Command::none()
-            },
-            Message::ConvertJobsChanged(jobs) => {
-                self.convert_jobs = jobs;
-                Command::none()
-            },
-            Message::ConvertButtonPressed => {
-                println!("Convert button pressed!");
-                let input_path = PathBuf::from(&self.convert_input_path);
-                let output_dir = if self.convert_output_dir.is_empty() {
-                    None
-                } else {
-                    Some(PathBuf::from(&self.convert_output_dir))
-                };
-                let codec_option = if self.convert_codec.is_empty() {
-                    None
-                } else {
-                    Some(self.convert_codec.clone())
-                };
-                let jobs_parsed = self.convert_jobs.parse::<usize>().unwrap_or(4);
-
-                let format_clone = self.convert_output_format.clone();
-                let quality_clone = self.convert_quality.clone();
-                let recursive_clone = self.convert_recursive;
-                Command::perform(
-                    async move {
-                        convert_files(
-                            &input_path,
-                            &format_clone,
-                            output_dir.as_ref(),
-                            recursive_clone,
-                            &quality_clone,
-                            codec_option.as_ref(),
-                            jobs_parsed,
-                        )
-                        .await
-                    },
-                    |result| {
-                        match result {
-                            Ok(_) => {
-                                println!("Conversion successful!");
-                                Message::PageChanged(Page::Home)
-                            }
-                            Err(e) => {
-                                eprintln!("Conversion failed: {:?}", e);
-                                Message::PageChanged(Page::Home)
-                            }
-                        }
-                    },
-                )
-            }
-            Message::ConvertBrowseInput => {
-                let current_path = self.convert_input_path.clone();
-                Command::perform(
-                    async move {
-                        AsyncFileDialog::new()
-                            .set_directory(&current_path)
-                            .pick_file()
-                            .await
-                    },
-                    |file_handle| Message::ConvertInputFileSelected(file_handle.map(|f| f.path().to_path_buf())),
-                )
-            }
-            Message::ConvertBrowseOutput => {
-                let current_path = self.convert_output_dir.clone();
-                Command::perform(
-                    async move {
-                        AsyncFileDialog::new()
-                            .set_directory(&current_path)
-                            .pick_folder()
-                            .await
-                    },
-                    |file_handle| Message::ConvertOutputDirectorySelected(file_handle.map(|f| f.path().to_path_buf())),
-                )
-            }
-            Message::ConvertInputFileSelected(path) => {
-                if let Some(path_buf) = path {
-                    self.convert_input_path = path_buf.to_string_lossy().into_owned();
-                }
-                Command::none()
-            }
-            Message::ConvertOutputDirectorySelected(path) => {
-                if let Some(path_buf) = path {
-                    self.convert_output_dir = path_buf.to_string_lossy().into_owned();
-                }
-                Command::none()
-            }
             Message::EnhanceAudioInputChanged(path) => {
                 self.enhance_audio_input = path;
                 Command::none()
@@ -410,6 +328,18 @@ impl Application for App {
                 self.enhance_audio_gate = toggle;
                 Command::none()
             },
+            Message::VideoDevicesLoaded(devices) => {
+                self.video_devices = Arc::new(devices);
+                Command::none()
+            },
+            Message::AudioDevicesLoaded(devices) => {
+                self.audio_devices = Arc::new(devices);
+                Command::none()
+            },
+            Message::EnhanceAudioGateThresholdChanged(threshold) => {
+                self.enhance_audio_gate_threshold = threshold;
+                Command::none()
+            },
             Message::EnhanceAudioOnlyToggled(toggle) => {
                 self.enhance_audio_only = toggle;
                 Command::none()
@@ -435,7 +365,7 @@ impl Application for App {
                     notch_freq,
                     compressor: self.enhance_audio_compressor,
                     gate: self.enhance_audio_gate,
-                    gate_threshold: Some(-50.0),
+                    gate_threshold: self.enhance_audio_gate_threshold.parse::<f32>().ok(),
                 };
 
                 let audio_only_clone = self.enhance_audio_only;
@@ -456,7 +386,7 @@ impl Application for App {
                             }
                             Err(e) => {
                                 eprintln!("Audio enhancement failed: {:?}", e);
-                                Message::PageChanged(Page::Home)
+                                Message::UpdateStatus(format!("Error: {}", e))
                             }
                         }
                     },
@@ -582,7 +512,7 @@ impl Application for App {
                             }
                             Err(e) => {
                                 eprintln!("Video enhancement failed: {:?}", e);
-                                Message::PageChanged(Page::Home)
+                                Message::UpdateStatus(format!("Error: {}", e))
                             }
                         }
                     },
@@ -652,7 +582,7 @@ impl Application for App {
                             }
                             Err(e) => {
                                 eprintln!("VHS Rescue failed: {:?}", e);
-                                Message::PageChanged(Page::Home)
+                                Message::UpdateStatus(format!("Error: {}", e))
                             }
                         }
                     },
@@ -806,7 +736,7 @@ impl Application for App {
                             }
                             Err(e) => {
                                 eprintln!("Capture failed: {:?}", e);
-                                Message::PageChanged(Page::Home)
+                                Message::UpdateStatus(format!("Error: {}", e))
                             }
                         }
                     },
@@ -863,7 +793,7 @@ impl Application for App {
                             }
                             Err(e) => {
                                 eprintln!("Cleaning failed: {:?}", e);
-                                Message::PageChanged(Page::Home)
+                                Message::UpdateStatus(format!("Error: {}", e))
                             }
                         }
                     },
@@ -904,7 +834,7 @@ impl Application for App {
                             }
                             Err(e) => {
                                 eprintln!("Info retrieval failed: {:?}", e);
-                                Message::PageChanged(Page::Home)
+                                Message::UpdateStatus(format!("Error: {}", e))
                             }
                         }
                     },
@@ -943,43 +873,71 @@ impl Application for App {
                             }
                             Err(e) => {
                                 eprintln!("Formats listing failed: {:?}", e);
-                                Message::PageChanged(Page::Home)
+                                Message::UpdateStatus(format!("Error: {}", e))
                             }
                         }
                     },
                 )
-            }
+            },
+            Message::ConversionStarted => {
+                self.is_converting = true;
+                self.conversion_progress = 0.0;
+                self.status_message = "Conversion started...".to_string();
+                Command::none()
+            },
+            Message::ConversionProgressed(progress) => {
+                self.conversion_progress = progress;
+                Command::none()
+            },
+            Message::ConversionCompleted(result) => {
+                self.is_converting = false;
+                self.conversion_progress = 0.0;
+                match result {
+                    Ok(_) => self.status_message = "Conversion completed successfully!".to_string(),
+                    Err(e) => self.status_message = format!("Conversion failed: {}", e),
+                }
+                Command::none()
+            },
+            Message::UpdateStatus(message) => {
+                self.status_message = message;
+                Command::none()
+            },
+            Message::ThemeChanged(theme) => {
+                self.current_theme = theme;
+                Command::none()
+            },
+            Message::LanguageChanged(language) => {
+                self.current_language = language;
+                i18n::set_language(language); // Set the global language
+                Command::none()
+            },
         }
     }
 
-    fn view(&self) -> Element<'_, Message> {
+
+    fn view(&self) -> Element<'_, Message, Theme, Renderer> {
         let sidebar = column![
-            nav_button(Page::Home, self.current_page),
-            nav_button(Page::Convert, self.current_page),
-            nav_button(Page::EnhanceAudio, self.current_page),
-            nav_button(Page::EnhanceVideo, self.current_page),
-            nav_button(Page::VhsRescue, self.current_page),
-            nav_button(Page::Capture, self.current_page),
-            nav_button(Page::Clean, self.current_page),
-            nav_button(Page::Info, self.current_page),
-            nav_button(Page::Formats, self.current_page),
+            nav_button(Page::Home, self.current_page, &self.current_theme),
+            nav_button(Page::Convert, self.current_page, &self.current_theme),
+            nav_button(Page::EnhanceAudio, self.current_page, &self.current_theme),
+            nav_button(Page::EnhanceVideo, self.current_page, &self.current_theme),
+            nav_button(Page::VhsRescue, self.current_page, &self.current_theme),
+            nav_button(Page::Capture, self.current_page, &self.current_theme),
+            nav_button(Page::Clean, self.current_page, &self.current_theme),
+            nav_button(Page::Info, self.current_page, &self.current_theme),
+            nav_button(Page::Formats, self.current_page, &self.current_theme),
+            nav_button(Page::Settings, self.current_page, &self.current_theme),
         ]
         .spacing(10)
         .width(Length::Fixed(200.0))
         .padding(20);
 
         let content_widget = match self.current_page {
-            Page::Home => home_page(),
-            Page::Convert => convert_page(
-                &self.convert_input_path,
-                &self.convert_output_format,
-                &self.convert_output_dir,
-                self.convert_recursive,
-                &self.convert_quality,
-                &self.convert_codec,
-                &self.convert_jobs,
+            Page::Home => pages::home::home_page(),
+            Page::Convert => pages::convert::convert_page(
+                &self.convert_page_state,
             ),
-            Page::EnhanceAudio => enhance_audio_page(
+            Page::EnhanceAudio => pages::enhance_audio::enhance_audio_page(
                 &self.enhance_audio_input,
                 &self.enhance_audio_output,
                 self.enhance_audio_denoise,
@@ -989,9 +947,10 @@ impl Application for App {
                 &self.enhance_audio_notch,
                 self.enhance_audio_compressor,
                 self.enhance_audio_gate,
+                &self.enhance_audio_gate_threshold,
                 self.enhance_audio_only,
             ),
-            Page::EnhanceVideo => enhance_video_page(
+            Page::EnhanceVideo => pages::enhance_video::enhance_video_page(
                 &self.enhance_video_input,
                 &self.enhance_video_output,
                 self.enhance_video_deinterlace,
@@ -1003,15 +962,17 @@ impl Application for App {
                 &self.enhance_video_height,
                 &self.enhance_video_aspect,
             ),
-            Page::VhsRescue => vhs_rescue_page(
+            Page::VhsRescue => pages::vhs_rescue::vhs_rescue_page(
                 &self.vhs_rescue_input,
                 &self.vhs_rescue_output,
                 &self.vhs_rescue_notch,
             ),
-            Page::Capture => capture_page(
+            Page::Capture => pages::capture::capture_page(
                 &self.capture_output,
                 &self.capture_video_device,
+                &self.video_devices, // Passa la lista dei dispositivi video
                 &self.capture_audio_device,
+                &self.audio_devices, // Passa la lista dei dispositivi audio
                 &self.capture_format,
                 self.capture_deinterlace,
                 self.capture_stabilize,
@@ -1024,370 +985,81 @@ impl Application for App {
                 &self.capture_abitrate,
                 self.capture_archival,
             ),
-            Page::Clean => clean_page(
+            Page::Clean => pages::clean::clean_page(
                 &self.clean_input,
                 self.clean_metadata,
                 self.clean_optimize,
                 self.clean_recursive,
             ),
-            Page::Info => info_page(
+            Page::Info => pages::info::info_page(
                 &self.info_input,
             ),
-            Page::Formats => formats_page(),
+            Page::Formats => pages::formats::formats_page(),
+            Page::Settings => pages::settings::settings_page(self.current_theme, self.current_language),
         };
 
-        let content: Element<Message> = content_widget
+        let content: Element<Message, Theme, Renderer> = content_widget
             .width(Length::Fill)
             .height(Length::Fill)
             .into();
 
-        row![sidebar, content]
-            .spacing(20)
-            .align_items(Alignment::Start)
-            .into()
+        let status_bar: Element<'_, Message, Theme, Renderer> = row![
+            text::<'_, Theme, Renderer>(&self.status_message).size(16).style(self.current_theme.appearance(&self.current_theme.into())),
+            if self.is_converting {
+                ProgressBar::new(0.0..=100.0, self.conversion_progress)
+                    .width(Length::Fixed(200.0))
+                    .style(self.current_theme) // Passa direttamente il tema
+                    .into()
+            } else {
+                Space::with_width(Length::Fixed(200.0)).into()
+            },
+            if let Some(error) = &self.error_message {
+                text::<'_, Theme, Renderer>(error).size(16).style(widget::text::Appearance { color: Some(Color::from_rgb(1.0, 0.0, 0.0)) }).into()
+            } else {
+                Space::with_width(Length::Fixed(0.0)).into()
+            }
+        ]
+        .spacing(10)
+        .align_items(Alignment::Center)
+        .padding(10)
+        .width(Length::Fill)
+        .into();
+
+        column![
+            row![sidebar, content]
+                .spacing(20)
+                .align_items(Alignment::Start)
+                .height(Length::Fill),
+            status_bar,
+        ]
+        .into()
     }
 
+    /// Restituisce il tema corrente dell'applicazione.
     fn theme(&self) -> Theme {
-        Theme::Dark
+        self.current_theme.into() // Conversione diretta
     }
 
+    /// Gestisce le sottoscrizioni per eventi esterni.
     fn subscription(&self) -> Subscription<Message> {
         Subscription::none()
     }
 }
 
-fn nav_button(page: Page, current_page: Page) -> Element<'static, Message> {
+/// Crea un pulsante di navigazione per la sidebar.
+/// Il pulsante sarà evidenziato se la pagina corrispondente è quella corrente.
+fn nav_button(page: Page, current_page: Page, app_theme: &AppTheme) -> Element<'static, Message, Theme, Renderer> {
     let is_active = page == current_page;
     let button_style = if is_active {
-        theme::Button::Primary
+        iced::theme::Button::Primary
     } else {
-        theme::Button::Secondary
+        iced::theme::Button::Secondary
     };
 
-    button(text(page.to_string()).size(20).horizontal_alignment(iced::alignment::Horizontal::Center))
+    button(text(translate(&format!("nav_{}", page.to_string().to_lowercase()))).size(20).horizontal_alignment(iced::alignment::Horizontal::Center).style(app_theme.appearance(&Theme::from(*app_theme))))
         .on_press(Message::PageChanged(page))
         .padding(10)
         .width(Length::Fill)
         .style(button_style)
         .into()
-}
-
-fn home_page() -> Column<'static, Message> {
-    column![
-        text("Welcome to Fluxara AVC!").size(40).style(Color::from_rgb8(0x00, 0xFF, 0x00)),
-        text("Your Linux-first analog restoration & conversion tool.").size(25).style(Color::from_rgb8(0x00, 0xCC, 0xFF)),
-        Space::with_height(Length::Fixed(50.0)),
-        text("Select a function from the sidebar to get started.").size(20).style(Color::from_rgb8(0xFF, 0xFF, 0xFF)),
-    ]
-    .align_items(Alignment::Center)
-    .spacing(20)
-    .padding(50)
-}
-
-fn convert_page(
-    input_path: &str,
-    output_format: &str,
-    output_dir: &str,
-    recursive: bool,
-    quality: &str,
-    codec: &str,
-    jobs: &str,
-) -> Column<'static, Message> {
-    column![
-        row![
-            text_input("Input File or Directory", input_path)
-                .on_input(Message::ConvertInputPathChanged)
-                .padding(10),
-            button("Browse").on_press(Message::ConvertBrowseInput),
-        ]
-        .spacing(10),
-        row![
-            text_input("Output Directory (optional)", output_dir)
-                .on_input(Message::ConvertOutputDirChanged)
-                .padding(10),
-            button("Browse").on_press(Message::ConvertBrowseOutput),
-        ]
-        .spacing(10),
-        text_input("Output Format (mp4, mp3, etc.)", output_format)
-            .on_input(Message::ConvertOutputFormatChanged)
-            .padding(10),
-        checkbox("Process directories recursively", recursive)
-            .on_toggle(Message::ConvertRecursiveToggled),
-        text_input("Audio Quality (e.g., 192k)", quality)
-            .on_input(Message::ConvertQualityChanged)
-            .padding(10),
-        text_input("Video Codec (e.g., libx264, optional)", codec)
-            .on_input(Message::ConvertCodecChanged)
-            .padding(10),
-        text_input("Parallel Jobs (default: 4)", jobs)
-            .on_input(Message::ConvertJobsChanged)
-            .padding(10),
-        button("Start Conversion").on_press(Message::ConvertButtonPressed),
-    ]
-    .align_items(Alignment::Center)
-    .spacing(20)
-    .padding(50)
-}
-
-fn enhance_audio_page(
-    input: &str,
-    output: &str,
-    denoise: bool,
-    normalize: bool,
-    highpass: &str,
-    lowpass: &str,
-    notch: &str,
-    compressor: bool,
-    gate: bool,
-    audio_only: bool,
-) -> Column<'static, Message> {
-    column![
-        text("Enhance Audio").size(30),
-        row![
-            text_input("Input File", input)
-                .on_input(Message::EnhanceAudioInputChanged)
-                .padding(10),
-            button("Browse").on_press(Message::EnhanceAudioBrowseInput),
-        ]
-        .spacing(10),
-        row![
-            text_input("Output File", output)
-                .on_input(Message::EnhanceAudioOutputChanged)
-                .padding(10),
-            button("Browse").on_press(Message::EnhanceAudioBrowseOutput),
-        ]
-        .spacing(10),
-        checkbox("Enable Denoising", denoise)
-            .on_toggle(Message::EnhanceAudioDenoiseToggled),
-        checkbox("Enable Loudness Normalization", normalize)
-            .on_toggle(Message::EnhanceAudioNormalizeToggled),
-        text_input("High-pass Filter Frequency (Hz)", highpass)
-            .on_input(Message::EnhanceAudioHighpassChanged)
-            .padding(10),
-        text_input("Low-pass Filter Frequency (Hz, optional)", lowpass)
-            .on_input(Message::EnhanceAudioLowpassChanged)
-            .padding(10),
-        text_input("Notch Filter (50 or 60 Hz, optional)", notch)
-            .on_input(Message::EnhanceAudioNotchChanged)
-            .padding(10),
-        checkbox("Enable Compressor", compressor)
-            .on_toggle(Message::EnhanceAudioCompressorToggled),
-        checkbox("Enable Noise Gate", gate)
-            .on_toggle(Message::EnhanceAudioGateToggled),
-        checkbox("Process Audio Only", audio_only)
-            .on_toggle(Message::EnhanceAudioOnlyToggled),
-        button("Start Audio Enhancement").on_press(Message::EnhanceAudioButtonPressed),
-    ]
-    .align_items(Alignment::Center)
-    .spacing(20)
-    .padding(50)
-}
-
-fn enhance_video_page(
-    input: &str,
-    output: &str,
-    deinterlace: bool,
-    stabilize: bool,
-    denoise_type: &str,
-    sharpen: bool,
-    color: bool,
-    width: &str,
-    height: &str,
-    aspect: &str,
-) -> Column<'static, Message> {
-    column![
-        text("Enhance Video").size(30),
-        row![
-            text_input("Input File", input)
-                .on_input(Message::EnhanceVideoInputChanged)
-                .padding(10),
-            button("Browse").on_press(Message::EnhanceVideoBrowseInput),
-        ]
-        .spacing(10),
-        row![
-            text_input("Output File", output)
-                .on_input(Message::EnhanceVideoOutputChanged)
-                .padding(10),
-            button("Browse").on_press(Message::EnhanceVideoBrowseOutput),
-        ]
-        .spacing(10),
-        checkbox("Enable Deinterlacing", deinterlace)
-            .on_toggle(Message::EnhanceVideoDeinterlaceToggled),
-        checkbox("Enable Stabilization", stabilize)
-            .on_toggle(Message::EnhanceVideoStabilizeToggled),
-        text_input("Denoise Type (none, hqdn3d, nlmeans)", denoise_type)
-            .on_input(Message::EnhanceVideoDenoiseTypeChanged)
-            .padding(10),
-        checkbox("Enable Sharpening", sharpen)
-            .on_toggle(Message::EnhanceVideoSharpenToggled),
-        checkbox("Enable Color Adjustment", color)
-            .on_toggle(Message::EnhanceVideoColorToggled),
-        text_input("Scale Width (optional)", width)
-            .on_input(Message::EnhanceVideoWidthChanged)
-            .padding(10),
-        text_input("Scale Height (optional)", height)
-            .on_input(Message::EnhanceVideoHeightChanged)
-            .padding(10),
-        text_input("Display Aspect Ratio (e.g., 4:3, 16:9)", aspect)
-            .on_input(Message::EnhanceVideoAspectChanged)
-            .padding(10),
-        button("Start Video Enhancement").on_press(Message::EnhanceVideoButtonPressed),
-    ]
-    .align_items(Alignment::Center)
-    .spacing(20)
-    .padding(50)
-}
-
-fn vhs_rescue_page(
-    input: &str,
-    output: &str,
-    notch: &str,
-) -> Column<'static, Message> {
-    column![
-        text("VHS Rescue").size(30),
-        row![
-            text_input("Input File", input)
-                .on_input(Message::VhsRescueInputChanged)
-                .padding(10),
-            button("Browse").on_press(Message::VhsRescueBrowseInput),
-        ]
-        .spacing(10),
-        row![
-            text_input("Output File", output)
-                .on_input(Message::VhsRescueOutputChanged)
-                .padding(10),
-            button("Browse").on_press(Message::VhsRescueBrowseOutput),
-        ]
-        .spacing(10),
-        text_input("Notch Filter (50 or 60 Hz, optional)", notch)
-            .on_input(Message::VhsRescueNotchChanged)
-            .padding(10),
-        button("Start VHS Rescue").on_press(Message::VhsRescueButtonPressed),
-    ]
-    .align_items(Alignment::Center)
-    .spacing(20)
-    .padding(50)
-}
-
-fn capture_page(
-    output: &str,
-    video_device: &str,
-    audio_device: &str,
-    format: &str,
-    deinterlace: bool,
-    stabilize: bool,
-    denoise: &str,
-    vbitrate: &str,
-    crf: &str,
-    width: &str,
-    height: &str,
-    fps: &str,
-    abitrate: &str,
-    archival: bool,
-) -> Column<'static, Message> {
-    column![
-        text("Capture Devices").size(30),
-        row![
-            text_input("Output File", output)
-                .on_input(Message::CaptureOutputChanged)
-                .padding(10),
-            button("Browse").on_press(Message::CaptureBrowseOutput),
-        ]
-        .spacing(10),
-        text_input("Video Device (e.g., /dev/video0)", video_device)
-            .on_input(Message::CaptureVideoDeviceChanged)
-            .padding(10),
-        text_input("Audio Device (e.g., hw:1,0)", audio_device)
-            .on_input(Message::CaptureAudioDeviceChanged)
-            .padding(10),
-        text_input("Output Format (mp4 or mkv)", format)
-            .on_input(Message::CaptureFormatChanged)
-            .padding(10),
-        checkbox("Enable Deinterlacing", deinterlace)
-            .on_toggle(Message::CaptureDeinterlaceToggled),
-        checkbox("Enable Stabilization", stabilize)
-            .on_toggle(Message::CaptureStabilizeToggled),
-        text_input("Denoise Type (none, hqdn3d, nlmeans, optional)", denoise)
-            .on_input(Message::CaptureDenoiseChanged)
-            .padding(10),
-        text_input("Video Bitrate (e.g., 5M, optional)", vbitrate)
-            .on_input(Message::CaptureVbitrateChanged)
-            .padding(10),
-        text_input("CRF Value (18-28, lower = better quality, optional)", crf)
-            .on_input(Message::CaptureCrfChanged)
-            .padding(10),
-        text_input("Video Width (optional)", width)
-            .on_input(Message::CaptureWidthChanged)
-            .padding(10),
-        text_input("Video Height (optional)", height)
-            .on_input(Message::CaptureHeightChanged)
-            .padding(10),
-        text_input("Frame Rate (optional)", fps)
-            .on_input(Message::CaptureFpsChanged)
-            .padding(10),
-        text_input("Audio Bitrate (e.g., 192k)", abitrate)
-            .on_input(Message::CaptureAbitrateChanged)
-            .padding(10),
-        checkbox("Archival Mode (lossless/near-lossless)", archival)
-            .on_toggle(Message::CaptureArchivalToggled),
-        button("Start Capture").on_press(Message::CaptureButtonPressed),
-    ]
-    .align_items(Alignment::Center)
-    .spacing(20)
-    .padding(50)
-}
-
-fn clean_page(
-    input: &str,
-    metadata: bool,
-    optimize: bool,
-    recursive: bool,
-) -> Column<'static, Message> {
-    column![
-        text("Clean Media Files").size(30),
-        row![
-            text_input("Input File or Directory", input)
-                .on_input(Message::CleanInputChanged)
-                .padding(10),
-            button("Browse").on_press(Message::CleanBrowseInput),
-        ]
-        .spacing(10),
-        checkbox("Remove Metadata", metadata)
-            .on_toggle(Message::CleanMetadataToggled),
-        checkbox("Optimize File Size", optimize)
-            .on_toggle(Message::CleanOptimizeToggled),
-        checkbox("Process Recursively", recursive)
-            .on_toggle(Message::CleanRecursiveToggled),
-        button("Start Cleaning").on_press(Message::CleanButtonPressed),
-    ]
-    .align_items(Alignment::Center)
-    .spacing(20)
-    .padding(50)
-}
-
-fn info_page(input: &str) -> Column<'static, Message> {
-    column![
-        text("Media File Information").size(30),
-        row![
-            text_input("Input File", input)
-                .on_input(Message::InfoInputChanged)
-                .padding(10),
-            button("Browse").on_press(Message::InfoBrowseInput),
-        ]
-        .spacing(10),
-        button("Get Info").on_press(Message::InfoButtonPressed),
-    ]
-    .align_items(Alignment::Center)
-    .spacing(20)
-    .padding(50)
-}
-
-fn formats_page() -> Column<'static, Message> {
-    column![
-        text("Supported Formats").size(30),
-        button("List Formats").on_press(Message::FormatsButtonPressed),
-    ]
-    .align_items(Alignment::Center)
-    .spacing(20)
-    .padding(50)
 }
