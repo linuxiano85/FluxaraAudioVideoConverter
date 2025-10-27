@@ -9,26 +9,28 @@ pub fn vhs_rescue_page(
     output: &str,
     notch: &str,
 ) -> iced::widget::Column<'static, Message> {
+    use crate::i18n::translate; // Importa translate localmente
+
     column![
-        text("VHS Rescue").size(30),
+        text(translate("vhs_rescue_title")).size(30),
         row![
-            text_input("Input File", input)
+            text_input(&translate("input_file_placeholder"), input)
                 .on_input(Message::VhsRescueInputChanged)
                 .padding(10),
-            button("Browse").on_press(Message::VhsRescueBrowseInput),
+            button(text(translate("browse_button"))).on_press(Message::VhsRescueBrowseInput),
         ]
         .spacing(10),
         row![
-            text_input("Output File", output)
+            text_input(&translate("output_file_placeholder"), output)
                 .on_input(Message::VhsRescueOutputChanged)
                 .padding(10),
-            button("Browse").on_press(Message::VhsRescueBrowseOutput),
+            button(text(translate("browse_button"))).on_press(Message::VhsRescueBrowseOutput),
         ]
         .spacing(10),
-        text_input("Notch Filter (50 or 60 Hz, optional)", notch)
+        text_input(&translate("notch_filter_placeholder"), notch)
             .on_input(Message::VhsRescueNotchChanged)
             .padding(10),
-        button("Start VHS Rescue").on_press(Message::VhsRescueButtonPressed),
+        button(text(translate("start_vhs_rescue_button"))).on_press(Message::VhsRescueButtonPressed),
     ]
     .align_items(Alignment::Center)
     .spacing(20)

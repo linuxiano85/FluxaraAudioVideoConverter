@@ -16,43 +16,45 @@ pub fn enhance_video_page(
     height: &str,
     aspect: &str,
 ) -> iced::widget::Column<'static, Message> {
+    use crate::i18n::translate; // Importa translate localmente
+
     column![
-        text("Enhance Video").size(30),
+        text(translate("enhance_video_title")).size(30),
         row![
-            text_input("Input File", input)
+            text_input(&translate("input_file_placeholder"), input)
                 .on_input(Message::EnhanceVideoInputChanged)
                 .padding(10),
-            button("Browse").on_press(Message::EnhanceVideoBrowseInput),
+            button(text(translate("browse_button"))).on_press(Message::EnhanceVideoBrowseInput),
         ]
         .spacing(10),
         row![
-            text_input("Output File", output)
+            text_input(&translate("output_file_placeholder"), output)
                 .on_input(Message::EnhanceVideoOutputChanged)
                 .padding(10),
-            button("Browse").on_press(Message::EnhanceVideoBrowseOutput),
+            button(text(translate("browse_button"))).on_press(Message::EnhanceVideoBrowseOutput),
         ]
         .spacing(10),
-        checkbox("Enable Deinterlacing", deinterlace)
+        checkbox(translate("enable_deinterlacing_checkbox"), deinterlace)
             .on_toggle(Message::EnhanceVideoDeinterlaceToggled),
-        checkbox("Enable Stabilization", stabilize)
+        checkbox(translate("enable_stabilization_checkbox"), stabilize)
             .on_toggle(Message::EnhanceVideoStabilizeToggled),
-        text_input("Denoise Type (none, hqdn3d, nlmeans)", denoise_type)
+        text_input(&translate("denoise_type_placeholder"), denoise_type)
             .on_input(Message::EnhanceVideoDenoiseTypeChanged)
             .padding(10),
-        checkbox("Enable Sharpening", sharpen)
+        checkbox(translate("enable_sharpening_checkbox"), sharpen)
             .on_toggle(Message::EnhanceVideoSharpenToggled),
-        checkbox("Enable Color Adjustment", color)
+        checkbox(translate("enable_color_adjustment_checkbox"), color)
             .on_toggle(Message::EnhanceVideoColorToggled),
-        text_input("Scale Width (optional)", width)
+        text_input(&translate("scale_width_placeholder"), width)
             .on_input(Message::EnhanceVideoWidthChanged)
             .padding(10),
-        text_input("Scale Height (optional)", height)
+        text_input(&translate("scale_height_placeholder"), height)
             .on_input(Message::EnhanceVideoHeightChanged)
             .padding(10),
-        text_input("Display Aspect Ratio (e.g., 4:3, 16:9)", aspect)
+        text_input(&translate("display_aspect_ratio_placeholder"), aspect)
             .on_input(Message::EnhanceVideoAspectChanged)
             .padding(10),
-        button("Start Video Enhancement").on_press(Message::EnhanceVideoButtonPressed),
+        button(text(translate("start_video_enhancement_button"))).on_press(Message::EnhanceVideoButtonPressed),
     ]
     .align_items(Alignment::Center)
     .spacing(20)

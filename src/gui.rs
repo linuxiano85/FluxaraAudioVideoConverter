@@ -19,7 +19,10 @@ use crate::i18n::{self, Language, translate};
 mod pages; // Declare the pages module
 mod theme; // Declare the theme module
 use theme::AppTheme; // Import AppTheme from the new module
-use pages::convert::{ConvertPageMessage, ConvertPageState}; // Import ConvertPageMessage and ConvertPageState
+use pages::convert::messages::ConvertPageMessage;
+use pages::convert::state::ConvertPageState;
+use pages::convert::update as convert_update;
+use pages::convert::view as convert_view;
 
 /// Punto di ingresso principale per l'applicazione GUI.
 /// Avvia l'applicazione Iced.
@@ -290,7 +293,7 @@ impl Application for App {
                 Command::none()
             },
             Message::ConvertPage(convert_msg) => {
-                pages::convert::update(&mut self.convert_page_state, convert_msg)
+                convert_update::update(&mut self.convert_page_state, convert_msg)
             },
             Message::EnhanceAudioInputChanged(path) => {
                 self.enhance_audio_input = path;
@@ -932,11 +935,11 @@ impl Application for App {
         .width(Length::Fixed(200.0))
         .padding(20);
 
-        let content_widget = match self.current_page {
-            Page::Home => pages::home::home_page(),
-            Page::Convert => pages::convert::convert_page(
+        let content_widget: Element<'_, Message, Theme, Renderer> = match self.current_page {
+            Page::Home => pages::home::home_page().into(),
+            Page::Convert => convert_view::convert_page(
                 &self.convert_page_state,
-            ),
+            ).into(),
             Page::EnhanceAudio => pages::enhance_audio::enhance_audio_page(
                 &self.enhance_audio_input,
                 &self.enhance_audio_output,
@@ -949,7 +952,7 @@ impl Application for App {
                 self.enhance_audio_gate,
                 &self.enhance_audio_gate_threshold,
                 self.enhance_audio_only,
-            ),
+            ).into(),
             Page::EnhanceVideo => pages::enhance_video::enhance_video_page(
                 &self.enhance_video_input,
                 &self.enhance_video_output,
@@ -961,12 +964,12 @@ impl Application for App {
                 &self.enhance_video_width,
                 &self.enhance_video_height,
                 &self.enhance_video_aspect,
-            ),
+            ).into(),
             Page::VhsRescue => pages::vhs_rescue::vhs_rescue_page(
                 &self.vhs_rescue_input,
                 &self.vhs_rescue_output,
                 &self.vhs_rescue_notch,
-            ),
+            ).into(),
             Page::Capture => pages::capture::capture_page(
                 &self.capture_output,
                 &self.capture_video_device,
@@ -984,37 +987,34 @@ impl Application for App {
                 &self.capture_fps,
                 &self.capture_abitrate,
                 self.capture_archival,
-            ),
+            ).into(),
             Page::Clean => pages::clean::clean_page(
                 &self.clean_input,
                 self.clean_metadata,
                 self.clean_optimize,
                 self.clean_recursive,
-            ),
+            ).into(),
             Page::Info => pages::info::info_page(
                 &self.info_input,
-            ),
-            Page::Formats => pages::formats::formats_page(),
-            Page::Settings => pages::settings::settings_page(self.current_theme, self.current_language),
+            ).into(),
+            Page::Formats => pages::formats::formats_page().into(),
+            Page::Settings => pages::settings::settings_page(self.current_theme, self.current_language).into(),
         };
 
-        let content: Element<Message, Theme, Renderer> = content_widget
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .into();
+        let content: Element<Message, Theme, Renderer> = content_widget.into();
 
         let status_bar: Element<'_, Message, Theme, Renderer> = row![
-            text::<'_, Theme, Renderer>(&self.status_message).size(16).style(self.current_theme.appearance(&self.current_theme.into())),
+            text::<'_, Theme, Renderer>(&self.status_message).size(16).style(iced::theme::Text::Color(self.current_theme.into())),
             if self.is_converting {
                 ProgressBar::new(0.0..=100.0, self.conversion_progress)
                     .width(Length::Fixed(200.0))
-                    .style(self.current_theme) // Passa direttamente il tema
+                    .style(iced::theme::ProgressBar::Custom(Box::new(self.current_theme))) // Passa direttamente il tema
                     .into()
             } else {
                 Space::with_width(Length::Fixed(200.0)).into()
             },
             if let Some(error) = &self.error_message {
-                text::<'_, Theme, Renderer>(error).size(16).style(widget::text::Appearance { color: Some(Color::from_rgb(1.0, 0.0, 0.0)) }).into()
+                text::<'_, Theme, Renderer>(error).size(16).style(Color::from_rgb(1.0, 0.0, 0.0)).into()
             } else {
                 Space::with_width(Length::Fixed(0.0)).into()
             }
@@ -1037,7 +1037,7 @@ impl Application for App {
 
     /// Restituisce il tema corrente dell'applicazione.
     fn theme(&self) -> Theme {
-        self.current_theme.into() // Conversione diretta
+        Theme::from(self.current_theme) // Conversione diretta
     }
 
     /// Gestisce le sottoscrizioni per eventi esterni.
@@ -1056,7 +1056,7 @@ fn nav_button(page: Page, current_page: Page, app_theme: &AppTheme) -> Element<'
         iced::theme::Button::Secondary
     };
 
-    button(text(translate(&format!("nav_{}", page.to_string().to_lowercase()))).size(20).horizontal_alignment(iced::alignment::Horizontal::Center).style(app_theme.appearance(&Theme::from(*app_theme))))
+    button(text(translate(&format!("nav_{}", page.to_string().to_lowercase()))).size(20).horizontal_alignment(iced::alignment::Horizontal::Center).style(iced::theme::Text::Color(app_theme.into())))
         .on_press(Message::PageChanged(page))
         .padding(10)
         .width(Length::Fill)

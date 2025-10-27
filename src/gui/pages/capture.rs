@@ -28,49 +28,49 @@ pub fn capture_page(
     column![
         text(translate("capture_devices_title")).size(30),
         row![
-            text_input(translate("output_file_placeholder"), output)
+            text_input(&translate("output_file_placeholder"), output)
                 .on_input(Message::CaptureOutputChanged)
                 .padding(10),
-            button(translate("browse_button")).on_press(Message::CaptureBrowseOutput),
+            button(text(translate("browse_button"))).on_press(Message::CaptureBrowseOutput),
         ]
         .spacing(10),
-        pick_list(video_devices.as_ref(), Some(video_device.to_string()), Message::CaptureVideoDeviceChanged)
-            .placeholder(translate("video_device_placeholder"))
-            .padding(10),
-        pick_list(audio_devices.as_ref(), Some(audio_device.to_string()), Message::CaptureAudioDeviceChanged)
-            .placeholder(translate("audio_device_placeholder"))
-            .padding(10),
-        text_input(translate("output_format_placeholder"), format)
+        pick_list(video_devices.as_ref().to_vec(), Some(video_device.to_string()), Message::CaptureVideoDeviceChanged)
+            .padding(10)
+            .placeholder(translate("video_device_placeholder")),
+        pick_list(audio_devices.as_ref().to_vec(), Some(audio_device.to_string()), Message::CaptureAudioDeviceChanged)
+            .padding(10)
+            .placeholder(translate("audio_device_placeholder")),
+        text_input(&translate("output_format_placeholder"), format)
             .on_input(Message::CaptureFormatChanged)
             .padding(10),
         checkbox(translate("enable_deinterlacing_checkbox"), deinterlace)
             .on_toggle(Message::CaptureDeinterlaceToggled),
         checkbox(translate("enable_stabilization_checkbox"), stabilize)
             .on_toggle(Message::CaptureStabilizeToggled),
-        text_input(translate("denoise_type_placeholder"), denoise)
+        text_input(&translate("denoise_type_placeholder"), denoise)
             .on_input(Message::CaptureDenoiseChanged)
             .padding(10),
-        text_input(translate("video_bitrate_placeholder"), vbitrate)
+        text_input(&translate("video_bitrate_placeholder"), vbitrate)
             .on_input(Message::CaptureVbitrateChanged)
             .padding(10),
-        text_input(translate("crf_value_placeholder"), crf)
+        text_input(&translate("crf_value_placeholder"), crf)
             .on_input(Message::CaptureCrfChanged)
             .padding(10),
-        text_input(translate("video_width_placeholder"), width)
+        text_input(&translate("video_width_placeholder"), width)
             .on_input(Message::CaptureWidthChanged)
             .padding(10),
-        text_input(translate("video_height_placeholder"), height)
+        text_input(&translate("video_height_placeholder"), height)
             .on_input(Message::CaptureHeightChanged)
             .padding(10),
-        text_input(translate("frame_rate_placeholder"), fps)
+        text_input(&translate("frame_rate_placeholder"), fps)
             .on_input(Message::CaptureFpsChanged)
             .padding(10),
-        text_input(translate("audio_bitrate_placeholder"), abitrate)
+        text_input(&translate("audio_bitrate_placeholder"), abitrate)
             .on_input(Message::CaptureAbitrateChanged)
             .padding(10),
         checkbox(translate("archival_mode_checkbox"), archival)
             .on_toggle(Message::CaptureArchivalToggled),
-        button(translate("start_capture_button")).on_press(Message::CaptureButtonPressed),
+        button(text(translate("start_capture_button"))).on_press(Message::CaptureButtonPressed),
     ]
     .align_items(Alignment::Center)
     .spacing(20)
