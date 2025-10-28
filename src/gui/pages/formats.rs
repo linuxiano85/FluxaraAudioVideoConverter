@@ -1,6 +1,6 @@
 use iced::{
     widget::{button, column, text},
-    Alignment, Length, Element,
+    Alignment,
 };
 use crate::gui::Message; // Importa Message dal modulo genitore
 

@@ -1,6 +1,6 @@
 use iced::{
     widget::{column, row, text, PickList, radio, Column},
-    Alignment, Element, Length,
+    Alignment, Length,
 };
 use crate::gui::{Message, AppTheme};
 use crate::i18n::Language;

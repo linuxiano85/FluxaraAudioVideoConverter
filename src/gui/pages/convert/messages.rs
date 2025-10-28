@@ -1,7 +1,6 @@
 //! Modulo per la gestione dei messaggi specifici della pagina di conversione.
 
 use std::path::PathBuf;
-use crate::gui::Message; // Importa Message dal modulo genitore
 
 /// Enum per i messaggi specifici della pagina di conversione.
 /// Ogni variante rappresenta un'azione o un evento che può verificarsi nella pagina.

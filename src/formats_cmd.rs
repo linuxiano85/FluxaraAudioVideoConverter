@@ -1,6 +1,6 @@
 //! Modulo per l'elenco dei formati audio/video supportati.
 
-use colored::*;
+
 
 /// Restituisce un vettore di stringhe contenente i formati audio/video supportati.
 pub fn list_formats() -> Vec<String> {

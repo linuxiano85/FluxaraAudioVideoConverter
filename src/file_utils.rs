@@ -1,6 +1,6 @@
 //! Modulo per le utilità di gestione dei file, come la raccolta e la verifica del tipo di file.
 
-use anyhow::{Result, Context};
+use anyhow::Result;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 

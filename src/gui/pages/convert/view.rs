@@ -2,7 +2,7 @@
 
 use iced::{
     widget::{button, column, row, text_input, checkbox, PickList},
-    Alignment, Length, Element,
+    Alignment, Element,
 };
 use crate::gui::Message; // Importa Message dal modulo genitore
 use super::state::ConvertPageState; // Importa lo stato della pagina di conversione

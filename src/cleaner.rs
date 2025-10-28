@@ -1,9 +1,9 @@
 //! Modulo per la pulizia e l'ottimizzazione dei file multimediali.
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use colored::*;
 use indicatif::{ProgressBar, ProgressStyle};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::{Command, Stdio};
 
 use crate::ffmpeg;

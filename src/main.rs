@@ -2,8 +2,6 @@ use anyhow::{Context, Result};
 use colored::*;
 use clap::Parser; // Importa Parser
 
-use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
 
 mod ai;
 mod audio;
@@ -24,7 +22,6 @@ use converter::convert_files; // Importa convert_files dal nuovo modulo
 use cleaner::clean_files; // Importa clean_files dal nuovo modulo
 use info_cmd::show_info; // Importa show_info dal nuovo modulo
 use formats_cmd::list_formats; // Importa list_formats dal nuovo modulo
-use file_utils::{collect_files, is_media_file, is_audio_format}; // Importa le utilità sui file
 
 fn main() -> Result<()> {
     print_banner();

@@ -3,7 +3,6 @@
 use iced::{Command};
 use std::path::PathBuf;
 use rfd::AsyncFileDialog; // Importa AsyncFileDialog
-use anyhow::Result; // Importa Result da anyhow
 
 use crate::gui::Message; // Importa Message dal modulo genitore
 use crate::convert_files; // Importa la funzione convert_files

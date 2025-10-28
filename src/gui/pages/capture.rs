@@ -1,6 +1,6 @@
 use iced::{
     widget::{button, column, row, text, text_input, checkbox, pick_list}, // Aggiunto pick_list
-    Alignment, Length, Element,
+    Alignment,
 };
 use crate::gui::Message; // Importa Message dal modulo genitore
 use std::sync::Arc; // Importa Arc

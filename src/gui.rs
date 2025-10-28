@@ -1,5 +1,5 @@
 use iced::{
-    widget::{self, button, column, row, text, Space, ProgressBar}, // Aggiunto 'self' per risolvere 'widget'
+    widget::{button, column, row, text, Space, ProgressBar},
     Alignment, Element, Length, Application, Settings, Theme, Color,
     Command, Subscription, Renderer,
 };
@@ -1006,15 +1006,15 @@ impl Application for App {
         let status_bar: Element<'_, Message, Theme, Renderer> = row![
             text::<'_, Theme, Renderer>(&self.status_message).size(16).style(iced::theme::Text::Color(self.current_theme.into())),
             if self.is_converting {
-                ProgressBar::new(0.0..=100.0, self.conversion_progress)
+                ProgressBar::<Theme>::new(0.0..=100.0, self.conversion_progress)
                     .width(Length::Fixed(200.0))
-                    .style(iced::theme::ProgressBar::Custom(Box::new(self.current_theme))) // Passa direttamente il tema
+                    .style(iced::theme::ProgressBar::Custom(Box::new(self.current_theme) as Box<dyn widget::progress_bar::StyleSheet<Style = Theme>>))
                     .into()
             } else {
                 Space::with_width(Length::Fixed(200.0)).into()
             },
             if let Some(error) = &self.error_message {
-                text::<'_, Theme, Renderer>(error).size(16).style(Color::from_rgb(1.0, 0.0, 0.0)).into()
+                text::<'_, Theme, Renderer>(error).size(16).style(iced::theme::Text::Color(Color::from_rgb(1.0, 0.0, 0.0))).into()
             } else {
                 Space::with_width(Length::Fixed(0.0)).into()
             }
@@ -1056,7 +1056,7 @@ fn nav_button(page: Page, current_page: Page, app_theme: &AppTheme) -> Element<'
         iced::theme::Button::Secondary
     };
 
-    button(text(translate(&format!("nav_{}", page.to_string().to_lowercase()))).size(20).horizontal_alignment(iced::alignment::Horizontal::Center).style(iced::theme::Text::Color(app_theme.into())))
+    button(text(translate(&format!("nav_{}", page.to_string().to_lowercase()))).size(20).horizontal_alignment(iced::alignment::Horizontal::Center).style(iced::theme::Text::Color((*app_theme).into())))
         .on_press(Message::PageChanged(page))
         .padding(10)
         .width(Length::Fill)

@@ -1,6 +1,5 @@
 //! Modulo per la gestione dello stato della pagina di conversione.
 
-use std::path::PathBuf;
 
 /// Stato specifico della pagina di conversione.
 /// Contiene tutti i dati necessari per la UI e la logica di conversione.
