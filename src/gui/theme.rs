@@ -27,10 +27,10 @@ impl fmt::Display for AppTheme {
 impl widget::checkbox::StyleSheet for AppTheme {
     type Style = Theme;
 
-    fn active(&self, style: &Theme, is_checked: bool) -> widget::checkbox::Appearance {
+    fn active(&self, _style: &Self::Style, is_checked: bool) -> widget::checkbox::Appearance {
         match self {
-            AppTheme::Light => iced::Theme::Light.active(&iced::Theme::Light, is_checked),
-            AppTheme::Dark => iced::Theme::Dark.active(&iced::Theme::Dark, is_checked),
+            AppTheme::Light => iced::Theme::Light.active(&iced::theme::Checkbox::default(), is_checked),
+            AppTheme::Dark => iced::Theme::Dark.active(&iced::theme::Checkbox::default(), is_checked),
             AppTheme::Gaming => widget::checkbox::Appearance {
                 background: Background::Color(Color::from_rgb(0.15, 0.15, 0.2)),
                 border: Border {
@@ -44,10 +44,10 @@ impl widget::checkbox::StyleSheet for AppTheme {
         }
     }
 
-    fn hovered(&self, style: &Theme, is_checked: bool) -> widget::checkbox::Appearance {
+    fn hovered(&self, _style: &Self::Style, is_checked: bool) -> widget::checkbox::Appearance {
         match self {
-            AppTheme::Light => iced::Theme::Light.hovered(&iced::Theme::Light, is_checked),
-            AppTheme::Dark => iced::Theme::Dark.hovered(&iced::Theme::Dark, is_checked),
+            AppTheme::Light => iced::Theme::Light.hovered(&iced::theme::Checkbox::default(), is_checked),
+            AppTheme::Dark => iced::Theme::Dark.hovered(&iced::theme::Checkbox::default(), is_checked),
             AppTheme::Gaming => widget::checkbox::Appearance {
                 background: Background::Color(Color::from_rgb(0.2, 0.2, 0.25)),
                 border: Border {
@@ -65,10 +65,10 @@ impl widget::checkbox::StyleSheet for AppTheme {
 impl widget::progress_bar::StyleSheet for AppTheme {
     type Style = Theme;
 
-    fn appearance(&self, style: &Self::Style) -> widget::progress_bar::Appearance {
+    fn appearance(&self, _style: &Self::Style) -> widget::progress_bar::Appearance {
         match self {
-            AppTheme::Light => iced::Theme::Light.appearance(&iced::Theme::Light),
-            AppTheme::Dark => iced::Theme::Dark.appearance(&iced::Theme::Dark),
+            AppTheme::Light => iced::Theme::Light.appearance(&iced::theme::ProgressBar::default()),
+            AppTheme::Dark => iced::Theme::Dark.appearance(&iced::theme::ProgressBar::default()),
             AppTheme::Gaming => widget::progress_bar::Appearance {
                 background: Background::Color(Color::from_rgb(0.1, 0.1, 0.1)),
                 bar: Background::Color(Color::from_rgb(0.0, 1.0, 0.0)),

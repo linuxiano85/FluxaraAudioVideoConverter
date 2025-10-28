@@ -116,6 +116,7 @@ async fn convert_file(
     ];
 
     if is_audio_format(format) {
+        args.push("-vn".to_string()); // Disable video for audio formats
         args.push("-b:a".to_string());
         args.push(quality.to_string());
     } else {
