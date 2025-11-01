@@ -311,14 +311,95 @@ pub fn update(app: &mut App, message: Message) -> Command<Message> {
             app.vhs_rescue_notch = freq;
             Command::none()
         },
+        Message::VhsRescueDeinterlaceToggled(toggle) => {
+            app.vhs_rescue_deinterlace = toggle;
+            Command::none()
+        },
+        Message::VhsRescueStabilizeToggled(toggle) => {
+            app.vhs_rescue_stabilize = toggle;
+            Command::none()
+        },
+        Message::VhsRescueDenoiseTypeChanged(denoise_type) => {
+            app.vhs_rescue_denoise_type = denoise_type;
+            Command::none()
+        },
+        Message::VhsRescueSharpenToggled(toggle) => {
+            app.vhs_rescue_sharpen = toggle;
+            Command::none()
+        },
+        Message::VhsRescueColorToggled(toggle) => {
+            app.vhs_rescue_color = toggle;
+            Command::none()
+        },
+        Message::VhsRescueHighpassChanged(freq) => {
+            app.vhs_rescue_highpass = freq;
+            Command::none()
+        },
+        Message::VhsRescueLowpassChanged(freq) => {
+            app.vhs_rescue_lowpass = freq;
+            Command::none()
+        },
+        Message::VhsRescueCompressorToggled(toggle) => {
+            app.vhs_rescue_compressor = toggle;
+            Command::none()
+        },
+        Message::VhsRescueGateToggled(toggle) => {
+            app.vhs_rescue_gate = toggle;
+            Command::none()
+        },
+        Message::VhsRescueNormalizeToggled(toggle) => {
+            app.vhs_rescue_normalize = toggle;
+            Command::none()
+        },
         Message::VhsRescueButtonPressed => {
             println!("VHS Rescue button pressed!");
             let input_path = PathBuf::from(&app.vhs_rescue_input);
-            let output_path = PathBuf::from(&app.vhs_rescue_output);
+            let output_path_str = if app.vhs_rescue_output.is_empty() {
+                generate_default_output_path(&app.vhs_rescue_input, "vhs_rescued")
+            } else {
+                app.vhs_rescue_output.clone()
+            };
+            let output_path = PathBuf::from(&output_path_str);
+
             let notch_freq = app.vhs_rescue_notch.parse::<u32>().ok();
+            let highpass_freq = app.vhs_rescue_highpass.parse::<u32>().ok();
+            let lowpass_freq = app.vhs_rescue_lowpass.parse::<u32>().ok();
+
+            let video_denoise_type = match app.vhs_rescue_denoise_type.as_str() {
+                "none" => DenoiseType::None,
+                "nlmeans" => DenoiseType::Nlmeans,
+                _ => DenoiseType::Hqdn3d,
+            };
+
+            let video_opts = video::VideoEnhanceOptions {
+                deinterlace: app.vhs_rescue_deinterlace,
+                stabilize: app.vhs_rescue_stabilize,
+                denoise: video_denoise_type,
+                sharpen: app.vhs_rescue_sharpen,
+                color_adjust: app.vhs_rescue_color,
+                scale_width: None, // Non gestito dalla GUI per VHS Rescue al momento
+                scale_height: None, // Non gestito dalla GUI per VHS Rescue al momento
+                aspect_ratio: Some("4:3".to_string()), // Tipico VHS
+            };
+
+            let audio_opts = audio::AudioEnhanceOptions {
+                denoise: app.enhance_audio_denoise, // Riutilizza il denoise audio generico
+                normalize: app.vhs_rescue_normalize,
+                highpass_freq,
+                lowpass_freq,
+                notch_freq,
+                compressor: app.vhs_rescue_compressor,
+                gate: app.vhs_rescue_gate,
+                gate_threshold: Some(-50.0), // Valore fisso per il preset
+            };
+
+            let vhs_opts = video::VhsRescueOptions {
+                video_opts,
+                audio_opts,
+            };
 
             Command::perform(
-                async move { video::vhs_rescue(&input_path, &output_path, notch_freq) },
+                async move { video::vhs_rescue(&input_path, &output_path, &vhs_opts) },
                 |result| {
                     match result {
                         Ok(_) => {

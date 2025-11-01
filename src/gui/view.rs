@@ -30,11 +30,14 @@ fn nav_button(page: Page, current_page: Page, app_theme: &AppTheme) -> Element<'
         iced::theme::Button::Secondary
     };
 
-    button(text(translate(&format!("nav_{}", page.to_string().to_lowercase()))).size(20).horizontal_alignment(iced::alignment::Horizontal::Center).style(iced::theme::Text::Color((*app_theme).into())))
+    button(text(translate(&format!("nav_{}", page.to_string().to_lowercase())))
+        .size(20)
+        .horizontal_alignment(iced::alignment::Horizontal::Center)
+        .style(iced::theme::Text::Color((*app_theme).into())))
         .on_press(Message::PageChanged(page))
         .padding(10)
         .width(Length::Fill)
-        .style(button_style)
+        .style(app_theme) // Pass app_theme directly
         .into()
 }
 
@@ -102,6 +105,16 @@ pub fn view(app: &App) -> Element<'_, Message, Theme, Renderer> {
             &app.vhs_rescue_input,
             &app.vhs_rescue_output,
             &app.vhs_rescue_notch,
+            app.vhs_rescue_deinterlace,
+            app.vhs_rescue_stabilize,
+            &app.vhs_rescue_denoise_type,
+            app.vhs_rescue_sharpen,
+            app.vhs_rescue_color,
+            &app.vhs_rescue_highpass,
+            &app.vhs_rescue_lowpass,
+            app.vhs_rescue_compressor,
+            app.vhs_rescue_gate,
+            app.vhs_rescue_normalize,
         ).into(),
         Page::Capture => pages::capture::capture_page(
             &app.capture_output,

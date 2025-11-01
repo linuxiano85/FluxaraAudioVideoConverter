@@ -82,7 +82,17 @@ pub enum Message {
     VhsRescueBrowseOutput,
     VhsRescueInputFileSelected(Option<std::path::PathBuf>),
     VhsRescueOutputFileSelected(Option<std::path::PathBuf>),
-    // Messaggi per la pagina di acquisizione
+    VhsRescueDeinterlaceToggled(bool),
+    VhsRescueStabilizeToggled(bool),
+    VhsRescueDenoiseTypeChanged(String),
+    VhsRescueSharpenToggled(bool),
+    VhsRescueColorToggled(bool),
+    VhsRescueHighpassChanged(String),
+    VhsRescueLowpassChanged(String),
+    VhsRescueCompressorToggled(bool),
+    VhsRescueGateToggled(bool),
+    VhsRescueNormalizeToggled(bool),
+    // Messaggi specifici per la pagina di acquisizione
     CaptureOutputChanged(String),
     CaptureVideoDeviceChanged(String),
     CaptureAudioDeviceChanged(String),

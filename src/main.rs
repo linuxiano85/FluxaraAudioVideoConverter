@@ -129,7 +129,35 @@ fn main() -> Result<()> {
             let rt = tokio::runtime::Runtime::new()?;
             rt.block_on(async {
                 println!("{} Avvio VHS Rescue...", "🎬".bright_cyan());
-                video::vhs_rescue(input, output, *notch)
+
+                let video_opts = video::VideoEnhanceOptions {
+                    deinterlace: true,
+                    stabilize: true,
+                    denoise: video::DenoiseType::Hqdn3d,
+                    sharpen: true,
+                    color_adjust: true,
+                    scale_width: None,
+                    scale_height: None,
+                    aspect_ratio: Some("4:3".to_string()), // Typical VHS
+                };
+
+                let audio_opts = audio::AudioEnhanceOptions {
+                    denoise: true,
+                    normalize: true,
+                    highpass_freq: Some(80),
+                    lowpass_freq: Some(15000), // Remove high-freq noise
+                    notch_freq: *notch,
+                    compressor: true,
+                    gate: true,
+                    gate_threshold: Some(-50.0),
+                };
+
+                let vhs_opts = video::VhsRescueOptions {
+                    video_opts,
+                    audio_opts,
+                };
+
+                video::vhs_rescue(input, output, &vhs_opts)
             })?;
             println!("{} VHS Rescue completato!", "✓".green());
         }
