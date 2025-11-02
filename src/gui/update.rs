@@ -379,7 +379,7 @@ pub fn update(app: &mut App, message: Message) -> Command<Message> {
                 color_adjust: app.vhs_rescue_color,
                 scale_width: None, // Non gestito dalla GUI per VHS Rescue al momento
                 scale_height: None, // Non gestito dalla GUI per VHS Rescue al momento
-                aspect_ratio: Some("4:3".to_string()), // Tipico VHS
+                aspect_ratio: Some("4:3".to_string()), // Typical VHS
             };
 
             let audio_opts = audio::AudioEnhanceOptions {
