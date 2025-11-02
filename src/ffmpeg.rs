@@ -85,7 +85,7 @@ pub fn convert_media(
 ) -> Result<()> {
     check_ffmpeg()?;
 
-    let mut args = vec![
+    let args = vec![
         "-i".to_string(),
         input.to_string_lossy().to_string(),
         "-c:v".to_string(),
@@ -151,8 +151,16 @@ pub fn probe_device_caps(device: &str) -> Result<DeviceCaps> {
             anyhow::bail!("v4l2-ctl failed: {} (device: {})", stderr.trim(), device)
         }
         Err(e) => {
-            eprintln!("v4l2-ctl not available: {}. Install v4l-utils for better detection.", e);
-            Ok(DeviceCaps { width: 640, height: 480, fps: 30, formats: vec!["yuyv422".into()] })
+            eprintln!(
+                "v4l2-ctl not available: {}. Install v4l-utils for better detection.",
+                e
+            );
+            Ok(DeviceCaps {
+                width: 640,
+                height: 480,
+                fps: 30,
+                formats: vec!["yuyv422".into()],
+            })
         }
     }
 }

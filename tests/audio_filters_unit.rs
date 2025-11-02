@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 
-use fluxara_avc::audio::{build_audio_filters, AudioEnhanceOptions, enhance_audio, enhance_audio_only};
+use fluxara_avc::audio::{
+    build_audio_filters, enhance_audio, enhance_audio_only, AudioEnhanceOptions,
+};
 
 fn temp_file(name: &str) -> PathBuf {
     std::env::temp_dir().join(name)
@@ -81,13 +83,30 @@ fn should_enhance_audio_video_copy_stream() {
 
     // create input via ffmpeg lavfi
     let gen = std::process::Command::new("ffmpeg")
-        .arg("-f").arg("lavfi").arg("-i").arg("testsrc=duration=1:size=160x120:rate=15")
-        .arg("-f").arg("lavfi").arg("-i").arg("sine=frequency=440:duration=1")
+        .arg("-f")
+        .arg("lavfi")
+        .arg("-i")
+        .arg("testsrc=duration=1:size=160x120:rate=15")
+        .arg("-f")
+        .arg("lavfi")
+        .arg("-i")
+        .arg("sine=frequency=440:duration=1")
         .arg("-shortest")
-        .arg("-pix_fmt").arg("yuv420p")
-        .arg("-y").arg(&input)
+        .arg("-pix_fmt")
+        .arg("yuv420p")
+        .arg("-y")
+        .arg(&input)
         .output();
-    assert!(gen.is_ok(), "ffmpeg should generate input");
+
+    if gen.is_err() {
+        panic!("ffmpeg not found or failed to start: {:?}", gen.err());
+    }
+    let gen = gen.unwrap();
+    if !gen.status.success() {
+        eprintln!("ffmpeg stdout: {}", String::from_utf8_lossy(&gen.stdout));
+        eprintln!("ffmpeg stderr: {}", String::from_utf8_lossy(&gen.stderr));
+        panic!("ffmpeg failed to generate input video: exit {}", gen.status);
+    }
 
     let opts = AudioEnhanceOptions::default();
     let res = enhance_audio(&input, &output, &opts);
@@ -105,10 +124,23 @@ fn should_enhance_audio_only_to_lossless_flac() {
 
     // create input via ffmpeg lavfi
     let gen = std::process::Command::new("ffmpeg")
-        .arg("-f").arg("lavfi").arg("-i").arg("sine=frequency=440:duration=1")
-        .arg("-y").arg(&input)
+        .arg("-f")
+        .arg("lavfi")
+        .arg("-i")
+        .arg("sine=frequency=440:duration=1")
+        .arg("-y")
+        .arg(&input)
         .output();
-    assert!(gen.is_ok(), "ffmpeg should generate input audio");
+
+    if gen.is_err() {
+        panic!("ffmpeg not found or failed to start: {:?}", gen.err());
+    }
+    let gen = gen.unwrap();
+    if !gen.status.success() {
+        eprintln!("ffmpeg stdout: {}", String::from_utf8_lossy(&gen.stdout));
+        eprintln!("ffmpeg stderr: {}", String::from_utf8_lossy(&gen.stderr));
+        panic!("ffmpeg failed to generate input audio: exit {}", gen.status);
+    }
 
     let opts = AudioEnhanceOptions {
         denoise: true,
