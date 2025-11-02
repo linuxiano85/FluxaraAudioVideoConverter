@@ -94,7 +94,7 @@ impl From<AppTheme> for Color {
         match app_theme {
             AppTheme::Light => Color::BLACK,
             AppTheme::Dark => Color::WHITE,
-            AppTheme::Gaming => Color::from_rgb(0.0, 0.8, 1.0), // Blu neon per il testo
+            AppTheme::Gaming => Color::from_rgb(0.0, 0.8, 1.0), // Neon blue for text
         }
     }
 }
