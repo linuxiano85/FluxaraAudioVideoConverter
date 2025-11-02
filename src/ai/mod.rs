@@ -5,6 +5,8 @@
 // - Content-aware enhancement
 // - Speech enhancement
 
+#![allow(dead_code)]
+
 use anyhow::Result;
 
 #[allow(dead_code)]
@@ -14,6 +16,7 @@ pub struct AiEnhanceOptions {
     pub upscale_factor: u32,
     pub denoise_strength: f32,
 }
+// placeholder removed - no extra closing brace
 
 impl Default for AiEnhanceOptions {
     fn default() -> Self {
@@ -26,6 +29,7 @@ impl Default for AiEnhanceOptions {
 
 #[allow(dead_code)]
 /// AI-based video enhancement (stub)
+#[allow(dead_code)]
 pub fn ai_enhance_video(
     _input: &std::path::Path,
     _output: &std::path::Path,
@@ -38,6 +42,7 @@ pub fn ai_enhance_video(
 
 #[allow(dead_code)]
 /// AI-based audio enhancement (stub)
+#[allow(dead_code)]
 pub fn ai_enhance_audio(
     _input: &std::path::Path,
     _output: &std::path::Path,
