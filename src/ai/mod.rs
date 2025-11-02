@@ -9,6 +9,7 @@
 
 use anyhow::Result;
 
+#[allow(dead_code)]
 /// AI enhancement options (placeholder)
 #[derive(Debug, Clone)]
 pub struct AiEnhanceOptions {
@@ -26,6 +27,7 @@ impl Default for AiEnhanceOptions {
     }
 }
 
+#[allow(dead_code)]
 /// AI-based video enhancement (stub)
 #[allow(dead_code)]
 pub fn ai_enhance_video(
@@ -38,6 +40,7 @@ pub fn ai_enhance_video(
     );
 }
 
+#[allow(dead_code)]
 /// AI-based audio enhancement (stub)
 #[allow(dead_code)]
 pub fn ai_enhance_audio(

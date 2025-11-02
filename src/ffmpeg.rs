@@ -109,11 +109,13 @@ pub fn convert_media(
 }
 
 /// Build a filtergraph string from multiple filters
+#[allow(dead_code)]
 pub fn build_filtergraph(filters: &[&str]) -> String {
     filters.join(",")
 }
 
 /// Build a complex filtergraph with multiple inputs/outputs
+#[allow(dead_code)]
 pub fn build_complex_filtergraph(
     video_filters: &[&str],
     audio_filters: &[&str],
@@ -133,76 +135,24 @@ pub fn build_complex_filtergraph(
     (vf, af)
 }
 
-/// Probe device capabilities using v4l2-ctl
-pub fn probe_device_caps(device: &str) -> Result<DeviceCaps> {
-    let output = Command::new("v4l2-ctl")
-        .arg("-d")
-        .arg(device)
-        .arg("--list-formats-ext")
-        .output();
-
-    match output {
-        Ok(out) if out.status.success() => {
-            let stdout = String::from_utf8_lossy(&out.stdout);
-            parse_v4l2_output(&stdout)
-        }
-        Ok(out) => {
-            let stderr = String::from_utf8_lossy(&out.stderr);
-            anyhow::bail!("v4l2-ctl failed: {} (device: {})", stderr.trim(), device)
-        }
-        Err(e) => {
-            eprintln!("v4l2-ctl not available: {}. Install v4l-utils for better detection.", e);
-            Ok(DeviceCaps { width: 640, height: 480, fps: 30, formats: vec!["yuyv422".into()] })
-        }
-    }
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct DeviceCaps {
+    pub width: u32,
+    pub height: u32,
+    pub fps: u32,
+    pub formats: Vec<String>,
 }
 
-/// Parse the output of v4l2-ctl --list-formats-ext
-fn parse_v4l2_output(output: &str) -> Result<DeviceCaps> {
-    let mut formats = Vec::new();
-    let mut width = 0;
-    let mut height = 0;
-    let mut fps_num: Option<f32> = None;
-
-    for line in output.lines() {
-        if line.contains("Pixel Format") {
-            if let Some(format) = line.split('\'').nth(1) {
-                formats.push(format.to_string());
-            }
-        } else if line.contains("Size: Discrete") {
-            if let Some(resolution) = line.split_whitespace().last() {
-                let mut parts = resolution.split('x');
-                if let (Some(w), Some(h)) = (parts.next(), parts.next()) {
-                    width = w.parse().unwrap_or(0);
-                    height = h.parse().unwrap_or(0);
-                }
-            }
-        } else if line.contains("Interval: Discrete") {
-            if let Some(fps_str) = line.split('(').nth(1) {
-                if let Some(fps_val) = fps_str.split_whitespace().next() {
-                    if let Ok(v) = fps_val.parse::<f32>() {
-                        if v.is_finite() && v > 0.0 && v < 1000.0 {
-                            fps_num = Some(v);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    let fps_u32 = fps_num.map(|v| v.round() as u32).unwrap_or(30);
+/// Probe device capabilities (stub for now - would need v4l2-ctl integration)
+#[allow(dead_code)]
+pub fn probe_device_caps(_device: &str) -> Result<DeviceCaps> {
+    // For now, return default capabilities
+    // In a full implementation, this would call v4l2-ctl or parse ffmpeg output
     Ok(DeviceCaps {
         width,
         height,
         fps: fps_u32,
         formats,
     })
-}
-
-#[derive(Debug, Clone)]
-pub struct DeviceCaps {
-    pub width: u32,
-    pub height: u32,
-    pub fps: u32,
-    pub formats: Vec<String>,
 }

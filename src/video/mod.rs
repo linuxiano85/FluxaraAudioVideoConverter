@@ -1,8 +1,9 @@
 use crate::ffmpeg;
 use anyhow::Result;
 use std::path::Path;
+use crate::audio::AudioEnhanceOptions; // Importa AudioEnhanceOptions
 
-/// Video enhancement options
+/// Opzioni di miglioramento video
 #[derive(Debug, Clone)]
 pub struct VideoEnhanceOptions {
     pub deinterlace: bool,
@@ -119,36 +120,19 @@ pub fn enhance_video(input: &Path, output: &Path, opts: &VideoEnhanceOptions) ->
     Ok(())
 }
 
+/// Opzioni complete per il preset VHS Rescue.
+#[derive(Debug, Clone)]
+pub struct VhsRescueOptions {
+    pub video_opts: VideoEnhanceOptions,
+    pub audio_opts: AudioEnhanceOptions,
+}
+
 /// VHS rescue preset - combines video and audio enhancement
-pub fn vhs_rescue(input: &Path, output: &Path, notch_freq: Option<u32>) -> Result<()> {
+pub fn vhs_rescue(input: &Path, output: &Path, opts: &VhsRescueOptions) -> Result<()> {
     ffmpeg::check_ffmpeg()?;
 
-    // Video filters for VHS
-    let video_opts = VideoEnhanceOptions {
-        deinterlace: true,
-        stabilize: true,
-        denoise: DenoiseType::Hqdn3d,
-        sharpen: true,
-        color_adjust: true,
-        scale_width: None,
-        scale_height: None,
-        aspect_ratio: Some("4:3".to_string()), // Typical VHS
-    };
-
-    // Audio filters for VHS
-    let audio_opts = crate::audio::AudioEnhanceOptions {
-        denoise: true,
-        normalize: true,
-        highpass_freq: Some(80),
-        lowpass_freq: Some(15000), // Remove high-freq noise
-        notch_freq,
-        compressor: true,
-        gate: true,
-        gate_threshold: -50.0,
-    };
-
-    let vf = build_video_filters(&video_opts).join(",");
-    let af = crate::audio::build_audio_filters(&audio_opts).join(",");
+    let vf = build_video_filters(&opts.video_opts).join(",");
+    let af = crate::audio::build_audio_filters(&opts.audio_opts).join(",");
 
     let args = vec![
         "-i",
