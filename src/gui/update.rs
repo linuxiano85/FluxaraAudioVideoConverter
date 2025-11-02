@@ -14,20 +14,20 @@ use crate::gui::state::{App, Page, generate_default_output_path};
 use crate::gui::Message;
 use crate::gui::pages::convert::update as convert_update;
 
-/// Aggiorna lo stato dell'applicazione in base al messaggio ricevuto.
+/// Updates the application state based on the received message.
 ///
-/// Questa funzione gestisce tutti i messaggi dell'applicazione, modificando lo stato
-/// dell'applicazione (`App`) e restituendo un `Command` per eseguire effetti collaterali.
+/// This function handles all application messages, modifying the application state (`App`)
+/// and returning a `Command` to perform side effects.
 ///
-/// # Argomenti
+/// # Arguments
 ///
-/// * `app` - Un riferimento mutabile allo stato dell'applicazione.
-/// * `message` - Il messaggio da elaborare.
+/// * `app` - A mutable reference to the application state.
+/// * `message` - The message to process.
 ///
-/// # Restituisce
+/// # Returns
 ///
-/// Un `Command<Message>` che può essere `Command::none()` se non ci sono effetti collaterali,
-/// o un comando per eseguire un'operazione asincrona o un batch di comandi.
+/// A `Command<Message>` which may be `Command::none()` if there are no side effects,
+/// or a command to perform an asynchronous operation or a batch of commands.
 pub fn update(app: &mut App, message: Message) -> Command<Message> {
     match message {
         Message::PageChanged(page) => {
