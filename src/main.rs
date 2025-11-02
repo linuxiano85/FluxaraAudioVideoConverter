@@ -424,10 +424,22 @@ fn main() -> Result<()> {
 }
 
 fn print_banner() {
-    println!("{}", "╔══════════════════════════════════════════╗".bright_cyan());
-    println!("{}", "║        Fluxara AVC v0.1.0               ║".bright_cyan());
-    println!("{}", "║   Linux-first Analog Restoration        ║".bright_cyan());
-    println!("{}", "╚══════════════════════════════════════════╝".bright_cyan());
+    println!(
+        "{}",
+        "╔══════════════════════════════════════════╗".bright_cyan()
+    );
+    println!(
+        "{}",
+        "║        Fluxara AVC v0.1.0               ║".bright_cyan()
+    );
+    println!(
+        "{}",
+        "║   Linux-first Analog Restoration        ║".bright_cyan()
+    );
+    println!(
+        "{}",
+        "╚══════════════════════════════════════════╝".bright_cyan()
+    );
     println!();
 }
 

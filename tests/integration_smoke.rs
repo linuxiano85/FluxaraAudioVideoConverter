@@ -103,7 +103,17 @@ fn test_audio_conversion() {
         .arg(&input_file)
         .output();
 
-    if gen.is_ok() && input_file.exists() {
+    if gen.is_err() {
+        panic!("ffmpeg not found or failed to start: {:?}", gen.err());
+    }
+    let gen = gen.unwrap();
+    if !gen.status.success() {
+        eprintln!("ffmpeg stdout: {}", String::from_utf8_lossy(&gen.stdout));
+        eprintln!("ffmpeg stderr: {}", String::from_utf8_lossy(&gen.stderr));
+        panic!("ffmpeg failed to generate input audio: exit {}", gen.status);
+    }
+
+    if input_file.exists() {
         // Try to convert it
         let output = Command::new("ffmpeg")
             .arg("-i")
@@ -147,7 +157,17 @@ fn test_video_deinterlace_filter() {
         .arg(&input_file)
         .output();
 
-    if gen.is_ok() && input_file.exists() {
+    if gen.is_err() {
+        panic!("ffmpeg not found or failed to start: {:?}", gen.err());
+    }
+    let gen = gen.unwrap();
+    if !gen.status.success() {
+        eprintln!("ffmpeg stdout: {}", String::from_utf8_lossy(&gen.stdout));
+        eprintln!("ffmpeg stderr: {}", String::from_utf8_lossy(&gen.stderr));
+        panic!("ffmpeg failed to generate input video: exit {}", gen.status);
+    }
+
+    if input_file.exists() {
         // Apply bwdif filter
         let output = Command::new("ffmpeg")
             .arg("-i")
@@ -191,7 +211,17 @@ fn test_audio_denoise_filter() {
         .arg(&input_file)
         .output();
 
-    if gen.is_ok() && input_file.exists() {
+    if gen.is_err() {
+        panic!("ffmpeg not found or failed to start: {:?}", gen.err());
+    }
+    let gen = gen.unwrap();
+    if !gen.status.success() {
+        eprintln!("ffmpeg stdout: {}", String::from_utf8_lossy(&gen.stdout));
+        eprintln!("ffmpeg stderr: {}", String::from_utf8_lossy(&gen.stderr));
+        panic!("ffmpeg failed to generate input audio: exit {}", gen.status);
+    }
+
+    if input_file.exists() {
         // Apply afftdn filter
         let output = Command::new("ffmpeg")
             .arg("-i")
@@ -231,7 +261,17 @@ fn test_loudness_normalization() {
         .arg(&input_file)
         .output();
 
-    if gen.is_ok() && input_file.exists() {
+    if gen.is_err() {
+        panic!("ffmpeg not found or failed to start: {:?}", gen.err());
+    }
+    let gen = gen.unwrap();
+    if !gen.status.success() {
+        eprintln!("ffmpeg stdout: {}", String::from_utf8_lossy(&gen.stdout));
+        eprintln!("ffmpeg stderr: {}", String::from_utf8_lossy(&gen.stderr));
+        panic!("ffmpeg failed to generate input audio: exit {}", gen.status);
+    }
+
+    if input_file.exists() {
         // Apply loudnorm filter
         let output = Command::new("ffmpeg")
             .arg("-i")
